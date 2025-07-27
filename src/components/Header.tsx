@@ -32,10 +32,14 @@ const Header = () => {
             <Button 
               variant="ghost" 
               className="hidden md:inline-flex text-primary-foreground hover:bg-primary-foreground/10"
+              onClick={() => window.location.href = '/dashboard'}
             >
               Sign In
             </Button>
-            <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
+            <Button 
+              className="bg-accent hover:bg-accent/90 text-accent-foreground"
+              onClick={() => window.location.href = '/dashboard'}
+            >
               Get Started
             </Button>
             <Button 

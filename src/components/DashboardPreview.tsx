@@ -59,7 +59,10 @@ const DashboardPreview = () => {
               </div>
             </div>
             
-            <Button className="bg-gradient-primary hover:opacity-90 text-primary-foreground px-8 py-6 text-lg">
+            <Button 
+              className="bg-gradient-primary hover:opacity-90 text-primary-foreground px-8 py-6 text-lg"
+              onClick={() => window.location.href = '/dashboard'}
+            >
               View Full Dashboard
             </Button>
           </div>

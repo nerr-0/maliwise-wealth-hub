@@ -17,13 +17,18 @@ const HeroSection = () => {
             for chamas, saccos, REITs, stocks, MMF, bonds and bills - all in one platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-            <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground px-8 py-6 text-lg">
+            <Button 
+              size="lg" 
+              className="bg-accent hover:bg-accent/90 text-accent-foreground px-8 py-6 text-lg"
+              onClick={() => window.location.href = '/dashboard'}
+            >
               Get Started
             </Button>
             <Button 
               variant="outline" 
               size="lg" 
-              className="border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 px-8 py-6 text-lg"
+              className="border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 px-8 py-6 text-lg backdrop-blur-sm"
+              onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
             >
               Learn More
             </Button>
