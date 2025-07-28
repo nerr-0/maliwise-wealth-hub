@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -47,6 +47,22 @@ const topPerformers = [
 
 const Dashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("6M");
+  const [headerVisible, setHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const controlHeader = () => {
+      if (window.scrollY > lastScrollY && window.scrollY > 100) {
+        setHeaderVisible(false);
+      } else {
+        setHeaderVisible(true);
+      }
+      setLastScrollY(window.scrollY);
+    };
+
+    window.addEventListener('scroll', controlHeader);
+    return () => window.removeEventListener('scroll', controlHeader);
+  }, [lastScrollY]);
 
   const chartConfig = {
     value: {
@@ -60,32 +76,40 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header */}
-      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40">
+      <div className={`border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40 transition-transform duration-300 ${
+        headerVisible ? 'translate-y-0' : '-translate-y-full'
+      }`}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Portfolio Dashboard</h1>
-              <p className="text-muted-foreground">Welcome back, manage your investments</p>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl md:text-2xl font-bold text-foreground truncate">Portfolio Dashboard</h1>
+              <p className="text-muted-foreground text-sm hidden sm:block">Welcome back, manage your investments</p>
             </div>
-            <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm">
+            <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
+              <Button variant="outline" size="sm" className="hidden sm:flex">
                 <Bell className="w-4 h-4 mr-2" />
                 Alerts
               </Button>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="hidden sm:flex">
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
+              </Button>
+              <Button variant="outline" size="sm" className="sm:hidden">
+                <Bell className="w-4 h-4" />
+              </Button>
+              <Button variant="outline" size="sm" className="sm:hidden">
+                <Settings className="w-4 h-4" />
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4 md:py-8 max-w-full">
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
           <Card className="bg-gradient-card shadow-card">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -157,7 +181,7 @@ const Dashboard = () => {
         </div>
 
         {/* Main Content */}
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-4 md:gap-8">
           {/* Portfolio Performance Chart */}
           <div className="lg:col-span-2">
             <Card className="bg-gradient-card shadow-card">
@@ -267,7 +291,7 @@ const Dashboard = () => {
         </div>
 
         {/* Bottom Section */}
-        <div className="grid lg:grid-cols-2 gap-8 mt-8">
+        <div className="grid lg:grid-cols-2 gap-4 md:gap-8 mt-6 md:mt-8">
           {/* Recent Transactions */}
           <Card className="bg-gradient-card shadow-card">
             <CardHeader>
@@ -279,7 +303,7 @@ const Dashboard = () => {
                 </Button>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="max-h-80 overflow-y-auto">
               <div className="space-y-4">
                 {recentTransactions.map((transaction) => (
                   <div key={transaction.id} className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
@@ -322,7 +346,7 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle>Top Performers</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="max-h-80 overflow-y-auto">
               <div className="space-y-4">
                 {topPerformers.map((performer, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-background/50 rounded-lg">
@@ -344,26 +368,28 @@ const Dashboard = () => {
         </div>
 
         {/* Kenyan Financial Platforms Integration */}
-        <div className="mt-8">
+        <div className="mt-6 md:mt-8">
           <Card className="bg-gradient-card shadow-card">
             <CardHeader>
-              <CardTitle>Kenyan Financial Platform Integrations</CardTitle>
+              <CardTitle className="text-lg md:text-xl">Kenyan Financial Platform Integrations</CardTitle>
               <p className="text-sm text-muted-foreground">
                 Connect your accounts from various Kenyan financial institutions
               </p>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="brokers" className="w-full">
-                <TabsList className="grid w-full grid-cols-5">
-                  <TabsTrigger value="brokers">Stock Brokers</TabsTrigger>
-                  <TabsTrigger value="reits">REITs</TabsTrigger>
-                  <TabsTrigger value="chamas">Chamas</TabsTrigger>
-                  <TabsTrigger value="saccos">SACCOs</TabsTrigger>
-                  <TabsTrigger value="bonds">Bonds & Bills</TabsTrigger>
-                </TabsList>
+                <div className="overflow-x-auto">
+                  <TabsList className="grid w-full grid-cols-5 min-w-[500px] md:min-w-0">
+                    <TabsTrigger value="brokers" className="text-xs md:text-sm">Stock Brokers</TabsTrigger>
+                    <TabsTrigger value="reits" className="text-xs md:text-sm">REITs</TabsTrigger>
+                    <TabsTrigger value="chamas" className="text-xs md:text-sm">Chamas</TabsTrigger>
+                    <TabsTrigger value="saccos" className="text-xs md:text-sm">SACCOs</TabsTrigger>
+                    <TabsTrigger value="bonds" className="text-xs md:text-sm">Bonds & Bills</TabsTrigger>
+                  </TabsList>
+                </div>
                 
                 <TabsContent value="brokers" className="mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
                     {[
                       { name: "Standard Investment Bank", connected: true, accounts: 2 },
                       { name: "Dyer & Blair", connected: false, accounts: 0 },
@@ -394,7 +420,7 @@ const Dashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="reits" className="mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
                     {[
                       { name: "ILAM Fahari I-REIT", connected: true, units: 1500 },
                       { name: "Acorn D-REIT", connected: false, units: 0 },
@@ -423,7 +449,7 @@ const Dashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="chamas" className="mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
                     {[
                       { name: "Investment Chama Plus", connected: true, contribution: 25000 },
                       { name: "Kiama Progressive Group", connected: true, contribution: 15000 },
@@ -451,7 +477,7 @@ const Dashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="saccos" className="mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
                     {[
                       { name: "Kenya Police SACCO", connected: true, shares: 45000 },
                       { name: "Mwalimu National SACCO", connected: false, shares: 0 },
@@ -480,7 +506,7 @@ const Dashboard = () => {
                 </TabsContent>
 
                 <TabsContent value="bonds" className="mt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
                     {[
                       { name: "Treasury Bills", connected: true, amount: 150000 },
                       { name: "Treasury Bonds", connected: true, amount: 300000 },
