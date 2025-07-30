@@ -20,7 +20,7 @@ const HeroSection = () => {
             <Button 
               size="lg" 
               className="bg-accent hover:bg-accent/90 text-accent-foreground px-8 py-6 text-lg"
-              onClick={() => window.location.href = '/dashboard'}
+              onClick={() => window.location.href = '/auth'}
             >
               Get Started
             </Button>

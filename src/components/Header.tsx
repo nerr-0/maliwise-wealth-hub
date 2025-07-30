@@ -5,9 +5,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, ChevronDown } from "lucide-react";
+import { Menu, ChevronDown, LogOut, User } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
+  const { user, signOut } = useAuth();
+
   return (
     <header className="absolute top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border/50">
       <div className="container mx-auto px-4 py-4">
@@ -62,13 +65,42 @@ const Header = () => {
           </nav>
           
           <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              className="hidden md:inline-flex text-foreground/80 hover:text-foreground hover:bg-accent/20"
-              onClick={() => window.location.href = '/dashboard'}
-            >
-              Sign In
-            </Button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="hidden md:inline-flex text-foreground/80 hover:text-foreground hover:bg-accent/20"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    {user.email}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem 
+                    onClick={() => window.location.href = '/dashboard'}
+                    className="cursor-pointer"
+                  >
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={signOut}
+                    className="cursor-pointer text-destructive"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                variant="ghost" 
+                className="hidden md:inline-flex text-foreground/80 hover:text-foreground hover:bg-accent/20"
+                onClick={() => window.location.href = '/auth'}
+              >
+                Sign In
+              </Button>
+            )}
             
             {/* Mobile Menu */}
             <DropdownMenu>
