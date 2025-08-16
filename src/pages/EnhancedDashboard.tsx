@@ -285,18 +285,33 @@ const EnhancedDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {holdings.slice(0, 5).map((holding) => (
-                      <div key={holding.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                        <div>
-                          <p className="font-medium">{holding.asset_name}</p>
-                          <p className="text-sm text-muted-foreground">{holding.asset_type}</p>
+                    {holdings.slice(0, 5).map((holding) => {
+                      const initialInvestment = (holding.average_cost || 0) * holding.quantity;
+                      const currentValue = holding.current_value || 0;
+                      const valueGrowth = currentValue - initialInvestment;
+                      const growthPercent = initialInvestment > 0 ? (valueGrowth / initialInvestment) * 100 : 0;
+                      
+                      return (
+                        <div key={holding.id} className="p-4 bg-muted rounded-lg space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium">{holding.asset_name}</p>
+                              <p className="text-sm text-muted-foreground">{holding.asset_type} • {holding.quantity} units</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium">KES {currentValue.toLocaleString()}</p>
+                              <p className={`text-sm ${growthPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {growthPercent >= 0 ? '+' : ''}KES {valueGrowth.toLocaleString()} ({growthPercent >= 0 ? '+' : ''}{growthPercent.toFixed(1)}%)
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex justify-between text-sm text-muted-foreground">
+                            <span>Initial Investment: KES {initialInvestment.toLocaleString()}</span>
+                            <span>Avg Cost: KES {(holding.average_cost || 0).toLocaleString()}</span>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">KES {(holding.current_value || 0).toLocaleString()}</p>
-                          <p className="text-sm text-muted-foreground">{holding.quantity} units</p>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
