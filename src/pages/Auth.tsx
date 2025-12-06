@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
+import { TrendingUp, Shield, PieChart, Wallet, ArrowRight } from 'lucide-react';
 
 const Auth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -16,7 +17,6 @@ const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Form states
   const [signUpData, setSignUpData] = useState({
     email: '',
     password: '',
@@ -30,7 +30,6 @@ const Auth = () => {
   });
 
   useEffect(() => {
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setSession(session);
@@ -42,7 +41,6 @@ const Auth = () => {
       }
     );
 
-    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -128,109 +126,203 @@ const Auth = () => {
   };
 
   if (user) {
-    return null; // Will redirect in useEffect
+    return null;
   }
 
+  const features = [
+    { icon: TrendingUp, title: "Smart Investments", desc: "AI-powered portfolio insights" },
+    { icon: Shield, title: "Secure & Safe", desc: "Bank-grade encryption" },
+    { icon: PieChart, title: "Track Growth", desc: "Real-time performance analytics" },
+    { icon: Wallet, title: "Multi-Platform", desc: "All your assets in one place" },
+  ];
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/10 via-background to-secondary/10 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">MaliWise</CardTitle>
-          <CardDescription>
-            Your Kenyan Wealth Management Hub
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={signInData.email}
-                    onChange={(e) => setSignInData(prev => ({ ...prev, email: e.target.value }))}
-                    required
-                  />
+    <div className="min-h-screen flex">
+      {/* Left Panel - Branding & Features */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary/90 to-primary/70 relative overflow-hidden">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-white/5 rounded-full animate-[pulse_4s_ease-in-out_infinite]" />
+          <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-white/5 rounded-full animate-[pulse_6s_ease-in-out_infinite_1s]" />
+          <div className="absolute top-1/4 right-1/4 w-64 h-64 bg-white/10 rounded-full blur-3xl animate-[float_8s_ease-in-out_infinite]" />
+          <div className="absolute bottom-1/4 left-1/4 w-48 h-48 bg-white/10 rounded-full blur-2xl animate-[float_6s_ease-in-out_infinite_2s]" />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center p-12 text-white">
+          <div className="animate-fade-in">
+            <h1 className="text-4xl font-bold mb-2">MaliWise</h1>
+            <p className="text-xl text-white/80 mb-8">Your Kenyan Wealth Management Hub</p>
+          </div>
+
+          <div className="space-y-6">
+            {features.map((feature, index) => (
+              <div 
+                key={feature.title}
+                className="flex items-center gap-4 p-4 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 hover:bg-white/20 transition-all duration-300 animate-fade-in"
+                style={{ animationDelay: `${(index + 1) * 150}ms` }}
+              >
+                <div className="p-3 bg-white/20 rounded-lg">
+                  <feature.icon className="w-6 h-6" />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    placeholder="Enter your password"
-                    value={signInData.password}
-                    onChange={(e) => setSignInData(prev => ({ ...prev, password: e.target.value }))}
-                    required
-                  />
+                <div>
+                  <h3 className="font-semibold">{feature.title}</h3>
+                  <p className="text-sm text-white/70">{feature.desc}</p>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Signing In..." : "Sign In"}
-                </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Full Name</Label>
-                  <Input
-                    id="signup-name"
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={signUpData.fullName}
-                    onChange={(e) => setSignUpData(prev => ({ ...prev, fullName: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={signUpData.email}
-                    onChange={(e) => setSignUpData(prev => ({ ...prev, email: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder="Create a password"
-                    value={signUpData.password}
-                    onChange={(e) => setSignUpData(prev => ({ ...prev, password: e.target.value }))}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-confirm">Confirm Password</Label>
-                  <Input
-                    id="signup-confirm"
-                    type="password"
-                    placeholder="Confirm your password"
-                    value={signUpData.confirmPassword}
-                    onChange={(e) => setSignUpData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Creating Account..." : "Create Account"}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-12 p-6 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20 animate-fade-in" style={{ animationDelay: '600ms' }}>
+            <p className="text-lg italic text-white/90">
+              "MaliWise transformed how I manage my investments. I now have complete visibility across all my portfolios."
+            </p>
+            <div className="mt-4 flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/30 rounded-full flex items-center justify-center font-bold">
+                JM
+              </div>
+              <div>
+                <p className="font-medium">James Mwangi</p>
+                <p className="text-sm text-white/60">Investor, Nairobi</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Auth Forms */}
+      <div className="flex-1 flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4">
+        <div className="w-full max-w-md animate-scale-in">
+          {/* Mobile Logo */}
+          <div className="lg:hidden text-center mb-8">
+            <h1 className="text-3xl font-bold text-primary">MaliWise</h1>
+            <p className="text-muted-foreground">Your Kenyan Wealth Management Hub</p>
+          </div>
+
+          <Card className="shadow-2xl border-0 bg-card/80 backdrop-blur-sm">
+            <CardHeader className="text-center pb-2">
+              <CardTitle className="text-2xl font-bold">Welcome</CardTitle>
+              <CardDescription>
+                Sign in to manage your investments
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="signin" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="signin" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    Sign In
+                  </TabsTrigger>
+                  <TabsTrigger value="signup" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    Sign Up
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="signin" className="animate-fade-in">
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-email">Email</Label>
+                      <Input
+                        id="signin-email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={signInData.email}
+                        onChange={(e) => setSignInData(prev => ({ ...prev, email: e.target.value }))}
+                        className="h-12"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-password">Password</Label>
+                      <Input
+                        id="signin-password"
+                        type="password"
+                        placeholder="Enter your password"
+                        value={signInData.password}
+                        onChange={(e) => setSignInData(prev => ({ ...prev, password: e.target.value }))}
+                        className="h-12"
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full h-12 text-base group" disabled={loading}>
+                      {loading ? "Signing In..." : (
+                        <>
+                          Sign In
+                          <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </TabsContent>
+                
+                <TabsContent value="signup" className="animate-fade-in">
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">Full Name</Label>
+                      <Input
+                        id="signup-name"
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={signUpData.fullName}
+                        onChange={(e) => setSignUpData(prev => ({ ...prev, fullName: e.target.value }))}
+                        className="h-12"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Email</Label>
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={signUpData.email}
+                        onChange={(e) => setSignUpData(prev => ({ ...prev, email: e.target.value }))}
+                        className="h-12"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Password</Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="Create a password"
+                        value={signUpData.password}
+                        onChange={(e) => setSignUpData(prev => ({ ...prev, password: e.target.value }))}
+                        className="h-12"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-confirm">Confirm Password</Label>
+                      <Input
+                        id="signup-confirm"
+                        type="password"
+                        placeholder="Confirm your password"
+                        value={signUpData.confirmPassword}
+                        onChange={(e) => setSignUpData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                        className="h-12"
+                        required
+                      />
+                    </div>
+                    <Button type="submit" className="w-full h-12 text-base group" disabled={loading}>
+                      {loading ? "Creating Account..." : (
+                        <>
+                          Create Account
+                          <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            By continuing, you agree to our Terms of Service and Privacy Policy
+          </p>
+        </div>
+      </div>
     </div>
   );
 };
