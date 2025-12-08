@@ -9,11 +9,45 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
 import { TrendingUp, Shield, PieChart, Wallet, ArrowRight } from 'lucide-react';
+import { z } from 'zod';
+
+// Validation schemas
+const signInSchema = z.object({
+  email: z.string().trim().email('Please enter a valid email address').max(255, 'Email is too long'),
+  password: z.string().min(1, 'Password is required').max(100, 'Password is too long'),
+});
+
+const signUpSchema = z.object({
+  email: z.string().trim().email('Please enter a valid email address').max(255, 'Email is too long'),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(100, 'Password is too long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
+  fullName: z.string().trim().min(2, 'Full name must be at least 2 characters').max(100, 'Full name is too long'),
+  confirmPassword: z.string().min(1, 'Please confirm your password'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+type SignInFormData = z.infer<typeof signInSchema>;
+type SignUpFormData = z.infer<typeof signUpSchema>;
+
+interface FormErrors {
+  email?: string;
+  password?: string;
+  fullName?: string;
+  confirmPassword?: string;
+}
 
 const Auth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(false);
+  const [signInErrors, setSignInErrors] = useState<FormErrors>({});
+  const [signUpErrors, setSignUpErrors] = useState<FormErrors>({});
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -55,11 +89,23 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSignUpErrors({});
     
-    if (signUpData.password !== signUpData.confirmPassword) {
+    // Validate form data
+    const result = signUpSchema.safeParse(signUpData);
+    
+    if (!result.success) {
+      const fieldErrors: FormErrors = {};
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0] as keyof FormErrors;
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = issue.message;
+        }
+      });
+      setSignUpErrors(fieldErrors);
       toast({
-        title: "Password Mismatch",
-        description: "Passwords do not match",
+        title: "Validation Error",
+        description: "Please fix the errors below",
         variant: "destructive"
       });
       return;
@@ -71,12 +117,12 @@ const Auth = () => {
       const redirectUrl = `${window.location.origin}/`;
       
       const { error } = await supabase.auth.signUp({
-        email: signUpData.email,
-        password: signUpData.password,
+        email: result.data.email,
+        password: result.data.password,
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            full_name: signUpData.fullName
+            full_name: result.data.fullName
           }
         }
       });
@@ -100,12 +146,34 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSignInErrors({});
+    
+    // Validate form data
+    const result = signInSchema.safeParse(signInData);
+    
+    if (!result.success) {
+      const fieldErrors: FormErrors = {};
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0] as keyof FormErrors;
+        if (!fieldErrors[field]) {
+          fieldErrors[field] = issue.message;
+        }
+      });
+      setSignInErrors(fieldErrors);
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors below",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setLoading(true);
     
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email: signInData.email,
-        password: signInData.password,
+        email: result.data.email,
+        password: result.data.password,
       });
 
       if (error) throw error;
@@ -227,9 +295,12 @@ const Auth = () => {
                         placeholder="Enter your email"
                         value={signInData.email}
                         onChange={(e) => setSignInData(prev => ({ ...prev, email: e.target.value }))}
-                        className="h-12"
+                        className={`h-12 ${signInErrors.email ? 'border-destructive' : ''}`}
                         required
                       />
+                      {signInErrors.email && (
+                        <p className="text-sm text-destructive">{signInErrors.email}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signin-password">Password</Label>
@@ -239,9 +310,12 @@ const Auth = () => {
                         placeholder="Enter your password"
                         value={signInData.password}
                         onChange={(e) => setSignInData(prev => ({ ...prev, password: e.target.value }))}
-                        className="h-12"
+                        className={`h-12 ${signInErrors.password ? 'border-destructive' : ''}`}
                         required
                       />
+                      {signInErrors.password && (
+                        <p className="text-sm text-destructive">{signInErrors.password}</p>
+                      )}
                     </div>
                     <Button type="submit" className="w-full h-12 text-base group" disabled={loading}>
                       {loading ? "Signing In..." : (
@@ -264,9 +338,12 @@ const Auth = () => {
                         placeholder="Enter your full name"
                         value={signUpData.fullName}
                         onChange={(e) => setSignUpData(prev => ({ ...prev, fullName: e.target.value }))}
-                        className="h-12"
+                        className={`h-12 ${signUpErrors.fullName ? 'border-destructive' : ''}`}
                         required
                       />
+                      {signUpErrors.fullName && (
+                        <p className="text-sm text-destructive">{signUpErrors.fullName}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-email">Email</Label>
@@ -276,9 +353,12 @@ const Auth = () => {
                         placeholder="Enter your email"
                         value={signUpData.email}
                         onChange={(e) => setSignUpData(prev => ({ ...prev, email: e.target.value }))}
-                        className="h-12"
+                        className={`h-12 ${signUpErrors.email ? 'border-destructive' : ''}`}
                         required
                       />
+                      {signUpErrors.email && (
+                        <p className="text-sm text-destructive">{signUpErrors.email}</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-password">Password</Label>
@@ -288,9 +368,15 @@ const Auth = () => {
                         placeholder="Create a password"
                         value={signUpData.password}
                         onChange={(e) => setSignUpData(prev => ({ ...prev, password: e.target.value }))}
-                        className="h-12"
+                        className={`h-12 ${signUpErrors.password ? 'border-destructive' : ''}`}
                         required
                       />
+                      {signUpErrors.password && (
+                        <p className="text-sm text-destructive">{signUpErrors.password}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Must be 8+ characters with uppercase, lowercase, and number
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="signup-confirm">Confirm Password</Label>
@@ -300,9 +386,12 @@ const Auth = () => {
                         placeholder="Confirm your password"
                         value={signUpData.confirmPassword}
                         onChange={(e) => setSignUpData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                        className="h-12"
+                        className={`h-12 ${signUpErrors.confirmPassword ? 'border-destructive' : ''}`}
                         required
                       />
+                      {signUpErrors.confirmPassword && (
+                        <p className="text-sm text-destructive">{signUpErrors.confirmPassword}</p>
+                      )}
                     </div>
                     <Button type="submit" className="w-full h-12 text-base group" disabled={loading}>
                       {loading ? "Creating Account..." : (
