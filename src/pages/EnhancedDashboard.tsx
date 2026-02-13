@@ -19,16 +19,33 @@ import { usePortfolioHoldings, useTransactions } from "@/hooks/usePortfolio";
 import TransactionForm from "@/components/TransactionForm";
 import AIInsights from "@/components/AIInsights";
 import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
 
 const EnhancedDashboard = () => {
   const { user, signOut } = useAuth();
   const { data: holdings = [], isLoading: holdingsLoading } = usePortfolioHoldings();
   const { data: transactions = [], isLoading: transactionsLoading } = useTransactions();
+  const [firstName, setFirstName] = useState("Investor");
   
   const [selectedPeriod, setSelectedPeriod] = useState("6M");
   const [headerVisible, setHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [activeTab, setActiveTab] = useState("overview");
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+      if (data?.full_name) {
+        setFirstName(data.full_name.split(' ')[0]);
+      }
+    };
+    fetchProfile();
+  }, [user?.id]);
 
   useEffect(() => {
     const controlHeader = () => {
@@ -104,7 +121,7 @@ const EnhancedDashboard = () => {
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <h1 className="text-xl md:text-2xl font-bold text-foreground truncate">
-                Welcome back, {user?.email}
+                Welcome back, {firstName}
               </h1>
               <p className="text-muted-foreground text-sm hidden sm:block">Manage your Kenyan investment portfolio</p>
             </div>
