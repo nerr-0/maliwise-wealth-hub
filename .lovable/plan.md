@@ -1,48 +1,103 @@
 
 
-# Plan: Fix Welcome Message and Apply Brand Colors
+# Plan: Real-Time Data for MaliWise
 
 ## Overview
 
-Two changes are needed:
+We'll add two real-time capabilities:
 
-1. **Welcome message** -- The Enhanced Dashboard currently shows the full email (`Welcome back, user@example.com`). We'll change it to show the user's first name from their `profiles` table (which has a `full_name` column), falling back to "Investor" if no name is set.
+1. **Live Database Sync** -- When portfolio holdings or transactions change in the database, the dashboard updates instantly without page refresh (using Supabase Realtime subscriptions).
 
-2. **Brand colors throughout the app** -- The app currently uses a mostly white/light theme. Per your design preference (dark theme with green accents), we'll update the CSS variables so the entire app embraces the dark color scheme with green accents consistently.
+2. **Live Market Prices** -- Fetch current stock/asset prices from an external API and display them alongside your holdings, showing live gains/losses.
 
-3. **Build error fix** -- There's a TypeScript error in the edge function (`error` is of type `unknown`). We'll fix that too.
+---
+
+## Part 1: Live Database Sync (Supabase Realtime)
+
+### What it does
+When you add a transaction, update a holding, or any change happens in the database, the dashboard will reflect it immediately -- no refresh needed. This also works if data changes from another device or session.
+
+### How it works
+- We'll create a new hook (`useRealtimePortfolio`) that subscribes to Supabase Realtime channels for the `portfolio_holdings` and `transactions` tables
+- When an INSERT, UPDATE, or DELETE event is detected, it automatically refreshes the React Query cache, causing the UI to update
+- Subscriptions are cleaned up when you leave the dashboard
+
+### What needs to change
+- **Enable Realtime** on `portfolio_holdings` and `transactions` tables via a database migration
+- **New hook**: `src/hooks/useRealtimePortfolio.tsx` -- subscribes to changes and invalidates queries
+- **Update `EnhancedDashboard.tsx`** -- use the new realtime hook
+
+---
+
+## Part 2: Live Market Prices (Alpha Vantage API)
+
+### What it does
+For each holding in your portfolio, we'll fetch the latest market price and calculate real-time profit/loss. This replaces the static `current_value` with live data.
+
+### How it works
+- **Alpha Vantage** offers a free API with stock price data (including some NSE-listed stocks via the exchange code `XNAI`)
+- We'll create a Supabase Edge Function that fetches prices from Alpha Vantage and returns them
+- The dashboard will call this edge function periodically (every 5 minutes) to update prices
+- For assets not available on Alpha Vantage (e.g., M-Pesa, Chama investments), the app will fall back to the manually entered `current_value`
+
+### What you'll need
+- A **free Alpha Vantage API key** (get one at alphavantage.co -- it's free, no credit card needed)
+- We'll store it securely as a Supabase secret
+
+### What needs to change
+- **New Edge Function**: `supabase/functions/fetch-market-prices/index.ts` -- fetches prices from Alpha Vantage
+- **New hook**: `src/hooks/useMarketPrices.tsx` -- calls the edge function and caches results
+- **Update `EnhancedDashboard.tsx`** -- show live prices with a "last updated" indicator
+- **Update holdings display** -- show live price vs. average cost with real-time gain/loss
 
 ---
 
 ## Technical Details
 
-### 1. Welcome Message (EnhancedDashboard.tsx)
+### Database Migration
+```sql
+-- Enable Realtime on portfolio_holdings and transactions
+ALTER PUBLICATION supabase_realtime ADD TABLE portfolio_holdings;
+ALTER PUBLICATION supabase_realtime ADD TABLE transactions;
+```
 
-- Query the `profiles` table to get the current user's `full_name`
-- Extract the first name from `full_name` (split by space, take first part)
-- Change line 107 from `Welcome back, {user?.email}` to `Welcome back, {firstName}`
-- Fallback chain: first name from profile -> "Investor"
+### New Hook: useRealtimePortfolio.tsx
+- Subscribe to Supabase Realtime channels for both tables
+- Filter events to only the current user's rows
+- On any change event (INSERT/UPDATE/DELETE), call `queryClient.invalidateQueries` for the relevant query keys
+- Return cleanup function to unsubscribe
 
-### 2. Brand Colors (src/index.css)
+### Edge Function: fetch-market-prices
+- Accepts a list of asset symbols
+- Calls Alpha Vantage `GLOBAL_QUOTE` endpoint for each symbol
+- Returns current prices mapped by symbol
+- Includes CORS headers for browser calls
+- Uses the `ALPHA_VANTAGE_API_KEY` secret
 
-Update the `:root` (light mode) CSS variables to use the dark theme as the default, matching the hero section's dark palette with green accents:
+### New Hook: useMarketPrices.tsx
+- Calls the edge function with the user's holding symbols
+- Polls every 5 minutes (configurable)
+- Merges live prices with holdings data
+- Falls back to stored `current_value` for unsupported assets
 
-- **Background**: Dark (220 13% 8-10%) instead of white
-- **Foreground**: Light text (210 40% 98%) instead of dark
-- **Card**: Dark card backgrounds (220 13% 12-14%)
-- **Primary**: Keep current dark primary but adjust foreground for contrast
-- **Accent**: Keep the green (142 76% 36%) -- this is your brand green
-- **Muted/Secondary**: Dark tones instead of light grays
-- **Border/Input**: Dark borders to match
+### Dashboard Updates
+- Add a "Live" indicator badge showing real-time status
+- Show "Last updated: X minutes ago" for market prices
+- Holdings cards show live price, daily change, and total gain/loss
+- Green/red color coding based on live performance
 
-This ensures every page (Dashboard, Auth, About, Pricing, Contact) automatically picks up the dark + green brand identity without changing individual component files.
-
-### 3. Edge Function Build Fix (supabase/functions/generate-investment-insights/index.ts)
-
-- Change `error.message` to `(error as Error).message` to fix the TypeScript `unknown` type error
+### Files to create:
+- `src/hooks/useRealtimePortfolio.tsx`
+- `src/hooks/useMarketPrices.tsx`
+- `supabase/functions/fetch-market-prices/index.ts`
 
 ### Files to modify:
-- `src/pages/EnhancedDashboard.tsx` -- welcome message with profile name
-- `src/index.css` -- dark brand color scheme as default
-- `supabase/functions/generate-investment-insights/index.ts` -- TypeScript fix
+- `src/pages/EnhancedDashboard.tsx`
+- `supabase/config.toml` (add JWT config for new edge function)
+
+### Database migration:
+- Enable Realtime publication on `portfolio_holdings` and `transactions`
+
+### Secret needed:
+- `ALPHA_VANTAGE_API_KEY` -- free key from alphavantage.co
 
