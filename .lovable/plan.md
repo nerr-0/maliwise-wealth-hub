@@ -1,103 +1,85 @@
 
 
-# Plan: Real-Time Data for MaliWise
+# Resume: Real-Time Data Implementation
 
-## Overview
+## Status Check
 
-We'll add two real-time capabilities:
-
-1. **Live Database Sync** -- When portfolio holdings or transactions change in the database, the dashboard updates instantly without page refresh (using Supabase Realtime subscriptions).
-
-2. **Live Market Prices** -- Fetch current stock/asset prices from an external API and display them alongside your holdings, showing live gains/losses.
+Nothing from the real-time plan has been built yet. Here's what we need to do:
 
 ---
 
-## Part 1: Live Database Sync (Supabase Realtime)
+## Step 1: Database Migration -- Enable Realtime
 
-### What it does
-When you add a transaction, update a holding, or any change happens in the database, the dashboard will reflect it immediately -- no refresh needed. This also works if data changes from another device or session.
+Enable Supabase Realtime subscriptions on two tables so the dashboard auto-updates when data changes.
 
-### How it works
-- We'll create a new hook (`useRealtimePortfolio`) that subscribes to Supabase Realtime channels for the `portfolio_holdings` and `transactions` tables
-- When an INSERT, UPDATE, or DELETE event is detected, it automatically refreshes the React Query cache, causing the UI to update
-- Subscriptions are cleaned up when you leave the dashboard
-
-### What needs to change
-- **Enable Realtime** on `portfolio_holdings` and `transactions` tables via a database migration
-- **New hook**: `src/hooks/useRealtimePortfolio.tsx` -- subscribes to changes and invalidates queries
-- **Update `EnhancedDashboard.tsx`** -- use the new realtime hook
-
----
-
-## Part 2: Live Market Prices (Alpha Vantage API)
-
-### What it does
-For each holding in your portfolio, we'll fetch the latest market price and calculate real-time profit/loss. This replaces the static `current_value` with live data.
-
-### How it works
-- **Alpha Vantage** offers a free API with stock price data (including some NSE-listed stocks via the exchange code `XNAI`)
-- We'll create a Supabase Edge Function that fetches prices from Alpha Vantage and returns them
-- The dashboard will call this edge function periodically (every 5 minutes) to update prices
-- For assets not available on Alpha Vantage (e.g., M-Pesa, Chama investments), the app will fall back to the manually entered `current_value`
-
-### What you'll need
-- A **free Alpha Vantage API key** (get one at alphavantage.co -- it's free, no credit card needed)
-- We'll store it securely as a Supabase secret
-
-### What needs to change
-- **New Edge Function**: `supabase/functions/fetch-market-prices/index.ts` -- fetches prices from Alpha Vantage
-- **New hook**: `src/hooks/useMarketPrices.tsx` -- calls the edge function and caches results
-- **Update `EnhancedDashboard.tsx`** -- show live prices with a "last updated" indicator
-- **Update holdings display** -- show live price vs. average cost with real-time gain/loss
-
----
-
-## Technical Details
-
-### Database Migration
 ```sql
--- Enable Realtime on portfolio_holdings and transactions
 ALTER PUBLICATION supabase_realtime ADD TABLE portfolio_holdings;
 ALTER PUBLICATION supabase_realtime ADD TABLE transactions;
 ```
 
-### New Hook: useRealtimePortfolio.tsx
-- Subscribe to Supabase Realtime channels for both tables
-- Filter events to only the current user's rows
-- On any change event (INSERT/UPDATE/DELETE), call `queryClient.invalidateQueries` for the relevant query keys
-- Return cleanup function to unsubscribe
+---
 
-### Edge Function: fetch-market-prices
-- Accepts a list of asset symbols
-- Calls Alpha Vantage `GLOBAL_QUOTE` endpoint for each symbol
-- Returns current prices mapped by symbol
-- Includes CORS headers for browser calls
-- Uses the `ALPHA_VANTAGE_API_KEY` secret
+## Step 2: Create `src/hooks/useRealtimePortfolio.tsx`
 
-### New Hook: useMarketPrices.tsx
-- Calls the edge function with the user's holding symbols
-- Polls every 5 minutes (configurable)
-- Merges live prices with holdings data
-- Falls back to stored `current_value` for unsupported assets
+A new hook that:
+- Subscribes to Supabase Realtime channels for `portfolio_holdings` and `transactions`
+- On any INSERT, UPDATE, or DELETE event, invalidates the relevant React Query cache keys
+- Cleans up subscriptions on unmount
 
-### Dashboard Updates
-- Add a "Live" indicator badge showing real-time status
-- Show "Last updated: X minutes ago" for market prices
-- Holdings cards show live price, daily change, and total gain/loss
-- Green/red color coding based on live performance
+---
 
-### Files to create:
-- `src/hooks/useRealtimePortfolio.tsx`
-- `src/hooks/useMarketPrices.tsx`
-- `supabase/functions/fetch-market-prices/index.ts`
+## Step 3: Create `supabase/functions/fetch-market-prices/index.ts`
 
-### Files to modify:
-- `src/pages/EnhancedDashboard.tsx`
-- `supabase/config.toml` (add JWT config for new edge function)
+A new edge function that:
+- Accepts a JSON body with an array of asset symbols (e.g., `["SCOM.XNAI", "KCB.XNAI"]`)
+- Reads the `ALPHA_VANTAGE_API_KEY` secret
+- Calls the Alpha Vantage `GLOBAL_QUOTE` endpoint for each symbol
+- Returns a map of symbol to current price
+- Includes proper CORS headers
 
-### Database migration:
-- Enable Realtime publication on `portfolio_holdings` and `transactions`
+Also update `supabase/config.toml` to disable JWT verification for this function (we'll validate auth in code).
 
-### Secret needed:
-- `ALPHA_VANTAGE_API_KEY` -- free key from alphavantage.co
+---
+
+## Step 4: API Key Requirement
+
+Before the market prices feature works, you'll need a **free Alpha Vantage API key**:
+1. Go to [alphavantage.co](https://www.alphavantage.co/support/#api-key)
+2. Sign up for a free key (no credit card needed)
+3. I'll prompt you to securely store it as a Supabase secret
+
+I'll request this secret before writing the edge function code.
+
+---
+
+## Step 5: Create `src/hooks/useMarketPrices.tsx`
+
+A new hook that:
+- Takes the user's holdings and extracts asset symbols
+- Calls the `fetch-market-prices` edge function via `supabase.functions.invoke()`
+- Polls every 5 minutes using React Query's `refetchInterval`
+- Merges live prices with holdings, falling back to stored `current_value` for unsupported assets
+- Tracks a "last updated" timestamp
+
+---
+
+## Step 6: Update `src/pages/EnhancedDashboard.tsx`
+
+- Import and activate the `useRealtimePortfolio` hook for live database sync
+- Import and use `useMarketPrices` to display live prices
+- Add a green pulsing "Live" badge in the header indicating real-time connection
+- Show "Last updated: X minutes ago" near the portfolio value
+- Update holdings cards to show live price, daily change percentage, and real-time gain/loss with green/red color coding
+- Recalculate total portfolio value using live prices when available
+
+---
+
+## Execution Order
+
+1. Run database migration (enable Realtime)
+2. Request `ALPHA_VANTAGE_API_KEY` secret from you
+3. Create `useRealtimePortfolio.tsx` hook
+4. Create `fetch-market-prices` edge function + update config.toml
+5. Create `useMarketPrices.tsx` hook
+6. Update `EnhancedDashboard.tsx` with live indicators and real-time data
 
