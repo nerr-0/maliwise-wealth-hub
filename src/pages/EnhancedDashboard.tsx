@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { 
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, 
@@ -12,19 +13,23 @@ import {
   Wallet, TrendingUp, PieChart as PieChartIcon, DollarSign,
   ArrowUpRight, ArrowDownRight, Plus, Settings, Bell,
   Building2, Landmark, Users, FileText, CreditCard,
-  LogOut
+  LogOut, Radio
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePortfolioHoldings, useTransactions } from "@/hooks/usePortfolio";
+import { useRealtimePortfolio } from "@/hooks/useRealtimePortfolio";
+import { useMarketPrices } from "@/hooks/useMarketPrices";
 import TransactionForm from "@/components/TransactionForm";
 import AIInsights from "@/components/AIInsights";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 const EnhancedDashboard = () => {
   const { user, signOut } = useAuth();
   const { data: holdings = [], isLoading: holdingsLoading } = usePortfolioHoldings();
   const { data: transactions = [], isLoading: transactionsLoading } = useTransactions();
+  useRealtimePortfolio();
+  const { prices: marketPrices, isLoading: pricesLoading, lastUpdated: pricesLastUpdated } = useMarketPrices(holdings);
   const [firstName, setFirstName] = useState("Investor");
   
   const [selectedPeriod, setSelectedPeriod] = useState("6M");
@@ -61,8 +66,14 @@ const EnhancedDashboard = () => {
     return () => window.removeEventListener('scroll', controlHeader);
   }, [lastScrollY]);
 
-  // Calculate portfolio metrics from real data
-  const totalPortfolioValue = holdings.reduce((sum, holding) => sum + (holding.current_value || 0), 0);
+  // Calculate portfolio metrics using live prices when available
+  const totalPortfolioValue = holdings.reduce((sum, holding) => {
+    const livePrice = marketPrices[holding.asset_name];
+    if (livePrice) {
+      return sum + livePrice.price * holding.quantity;
+    }
+    return sum + (holding.current_value || 0);
+  }, 0);
   const totalInvested = holdings.reduce((sum, holding) => sum + (holding.average_cost || 0) * holding.quantity, 0);
   const totalGain = totalPortfolioValue - totalInvested;
   const totalGainPercent = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
@@ -119,11 +130,24 @@ const EnhancedDashboard = () => {
       }`}>
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-xl md:text-2xl font-bold text-foreground truncate">
-                Welcome back, {firstName}
-              </h1>
-              <p className="text-muted-foreground text-sm hidden sm:block">Manage your Kenyan investment portfolio</p>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl md:text-2xl font-bold text-foreground truncate">
+                    Welcome back, {firstName}
+                  </h1>
+                  <Badge variant="outline" className="border-green-500 text-green-600 gap-1 flex-shrink-0">
+                    <Radio className="w-3 h-3 animate-pulse" />
+                    Live
+                  </Badge>
+                </div>
+                <p className="text-muted-foreground text-sm hidden sm:block">
+                  Manage your Kenyan investment portfolio
+                  {pricesLastUpdated && (
+                    <span className="ml-2 text-xs">
+                      · Prices updated {formatDistanceToNow(pricesLastUpdated, { addSuffix: true })}
+                    </span>
+                  )}
+                </p>
             </div>
             <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
               <Button variant="outline" size="sm" className="hidden sm:flex">
@@ -304,15 +328,26 @@ const EnhancedDashboard = () => {
                   <div className="space-y-3">
                     {holdings.slice(0, 5).map((holding) => {
                       const initialInvestment = (holding.average_cost || 0) * holding.quantity;
-                      const currentValue = holding.current_value || 0;
+                      const livePrice = marketPrices[holding.asset_name];
+                      const currentValue = livePrice
+                        ? livePrice.price * holding.quantity
+                        : (holding.current_value || 0);
                       const valueGrowth = currentValue - initialInvestment;
                       const growthPercent = initialInvestment > 0 ? (valueGrowth / initialInvestment) * 100 : 0;
+                      const dailyChange = livePrice?.changePercent;
                       
                       return (
                         <div key={holding.id} className="p-4 bg-muted rounded-lg space-y-2">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="font-medium">{holding.asset_name}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium">{holding.asset_name}</p>
+                                {livePrice && (
+                                  <Badge variant="outline" className="text-xs border-green-500 text-green-600">
+                                    Live
+                                  </Badge>
+                                )}
+                              </div>
                               <p className="text-sm text-muted-foreground">{holding.asset_type} • {holding.quantity} units</p>
                             </div>
                             <div className="text-right">
@@ -320,6 +355,11 @@ const EnhancedDashboard = () => {
                               <p className={`text-sm ${growthPercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                                 {growthPercent >= 0 ? '+' : ''}KES {valueGrowth.toLocaleString()} ({growthPercent >= 0 ? '+' : ''}{growthPercent.toFixed(1)}%)
                               </p>
+                              {dailyChange !== undefined && (
+                                <p className={`text-xs ${dailyChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                  Today: {dailyChange >= 0 ? '+' : ''}{dailyChange.toFixed(2)}%
+                                </p>
+                              )}
                             </div>
                           </div>
                           <div className="flex justify-between text-sm text-muted-foreground">
