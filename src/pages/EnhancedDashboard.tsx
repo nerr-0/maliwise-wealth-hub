@@ -422,7 +422,6 @@ const EnhancedDashboard = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[
-                    { name: "NSE (Nairobi Securities Exchange)", type: "Stock Exchange", status: "Not Connected" },
                     { name: "ChamaSoft", type: "Chama Management", status: "Not Connected" },
                     { name: "Ndovu", type: "Digital Investment", status: "Not Connected" },
                     { name: "M-Pesa", type: "Mobile Money", status: "Not Connected" },
