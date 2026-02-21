@@ -1,27 +1,33 @@
 
 
-# Plan: Custom Favicon + Remove NSE Platform
+# Plan: Add Investment Product Platforms
 
-## 1. Replace the Favicon (Browser Tab Icon)
+Add MMF (Money Market Funds), REITs, Bonds, and Bills to the Platforms section in the dashboard alongside the existing financial service platforms.
 
-Currently there is no explicit favicon link in `index.html`, so the browser falls back to Lovable's default icon.
+## Changes
 
-**What we'll do:**
-- Create an SVG favicon that matches the app logo -- a rounded green square with a white "M" (matching the Header component's logo)
-- Add it as `public/favicon.svg`
-- Update `index.html` to reference it with a `<link rel="icon">` tag
-- Also update the page title from "maliwise-wealth-hub" to "MaliWise" and clean up the Lovable-branded meta tags (description, author, OG image, Twitter card)
+**File: `src/pages/EnhancedDashboard.tsx`**
 
-## 2. Remove NSE from Connected Platforms
+Add the following entries to the platforms array (around line 425):
 
-In `src/pages/EnhancedDashboard.tsx` (line 425), the "NSE (Nairobi Securities Exchange)" entry will be removed from the platforms array, leaving the other 5 platforms (ChamaSoft, Ndovu, M-Pesa, KCB Bank, Equity Bank).
+- **Money Market Funds (MMFs)** -- Type: "Money Market Fund", e.g. CIC MMF, Cytonn MMF, Sanlam MMF
+- **REITs** -- Type: "Real Estate Investment Trust", e.g. ILAM Fahari I-REIT, Acorn D-REIT
+- **Government Bonds** -- Type: "Fixed Income", e.g. Kenya Government Bonds
+- **Treasury Bills** -- Type: "Fixed Income", e.g. Kenya Treasury Bills
 
----
+These will appear as additional cards in the same grid layout, each with a "Connect" button and "Not Connected" status, matching the existing platform card style.
 
-## Files to Create
-- `public/favicon.svg` -- SVG icon with green rounded square + white "M"
-
-## Files to Modify
-- `index.html` -- Add favicon link, update title/meta tags
-- `src/pages/EnhancedDashboard.tsx` -- Remove NSE entry from the platforms list (line 425)
+The final platforms list will be:
+1. ChamaSoft (Chama Management)
+2. Ndovu (Digital Investment)
+3. M-Pesa (Mobile Money)
+4. KCB Bank (Banking)
+5. Equity Bank (Banking)
+6. CIC MMF (Money Market Fund)
+7. Cytonn MMF (Money Market Fund)
+8. Sanlam MMF (Money Market Fund)
+9. ILAM Fahari I-REIT (REIT)
+10. Acorn D-REIT (REIT)
+11. Kenya Government Bonds (Fixed Income)
+12. Kenya Treasury Bills (Fixed Income)
 
