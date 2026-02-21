@@ -427,7 +427,6 @@ const EnhancedDashboard = () => {
                       platforms: [
                         { name: "ChamaSoft", type: "Chama Management", status: "Not Connected" },
                         { name: "Ndovu", type: "Digital Investment", status: "Not Connected" },
-                        { name: "M-Pesa", type: "Mobile Money", status: "Not Connected" },
                       ],
                     },
                     {
@@ -442,7 +441,6 @@ const EnhancedDashboard = () => {
                       platforms: [
                         { name: "CIC MMF", type: "Money Market Fund", status: "Not Connected" },
                         { name: "Cytonn MMF", type: "Money Market Fund", status: "Not Connected" },
-                        { name: "Sanlam MMF", type: "Money Market Fund", status: "Not Connected" },
                       ],
                     },
                     {
@@ -477,6 +475,13 @@ const EnhancedDashboard = () => {
                             </CardContent>
                           </Card>
                         ))}
+                        <Card className="border-dashed border-2 border-muted-foreground/25 hover:border-primary/50 transition-colors cursor-pointer">
+                          <CardContent className="p-4 flex flex-col items-center justify-center h-full min-h-[120px]">
+                            <Plus className="w-8 h-8 text-muted-foreground mb-2" />
+                            <p className="text-sm font-medium text-muted-foreground">Add {group.category}</p>
+                            <p className="text-xs text-muted-foreground/70">Connect your preferred platform</p>
+                          </CardContent>
+                        </Card>
                       </div>
                     </div>
                   ))}
