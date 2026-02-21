@@ -426,7 +426,14 @@ const EnhancedDashboard = () => {
                     { name: "Ndovu", type: "Digital Investment", status: "Not Connected" },
                     { name: "M-Pesa", type: "Mobile Money", status: "Not Connected" },
                     { name: "KCB Bank", type: "Banking", status: "Not Connected" },
-                    { name: "Equity Bank", type: "Banking", status: "Not Connected" }
+                    { name: "Equity Bank", type: "Banking", status: "Not Connected" },
+                    { name: "CIC MMF", type: "Money Market Fund", status: "Not Connected" },
+                    { name: "Cytonn MMF", type: "Money Market Fund", status: "Not Connected" },
+                    { name: "Sanlam MMF", type: "Money Market Fund", status: "Not Connected" },
+                    { name: "ILAM Fahari I-REIT", type: "REIT", status: "Not Connected" },
+                    { name: "Acorn D-REIT", type: "REIT", status: "Not Connected" },
+                    { name: "Kenya Government Bonds", type: "Fixed Income", status: "Not Connected" },
+                    { name: "Kenya Treasury Bills", type: "Fixed Income", status: "Not Connected" }
                   ].map((platform) => (
                     <Card key={platform.name}>
                       <CardContent className="p-4">
