@@ -420,33 +420,65 @@ const EnhancedDashboard = () => {
                 <p className="text-muted-foreground">Connect your accounts for automatic portfolio sync</p>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-6">
                   {[
-                    { name: "ChamaSoft", type: "Chama Management", status: "Not Connected" },
-                    { name: "Ndovu", type: "Digital Investment", status: "Not Connected" },
-                    { name: "M-Pesa", type: "Mobile Money", status: "Not Connected" },
-                    { name: "KCB Bank", type: "Banking", status: "Not Connected" },
-                    { name: "Equity Bank", type: "Banking", status: "Not Connected" },
-                    { name: "CIC MMF", type: "Money Market Fund", status: "Not Connected" },
-                    { name: "Cytonn MMF", type: "Money Market Fund", status: "Not Connected" },
-                    { name: "Sanlam MMF", type: "Money Market Fund", status: "Not Connected" },
-                    { name: "ILAM Fahari I-REIT", type: "REIT", status: "Not Connected" },
-                    { name: "Acorn D-REIT", type: "REIT", status: "Not Connected" },
-                    { name: "Kenya Government Bonds", type: "Fixed Income", status: "Not Connected" },
-                    { name: "Kenya Treasury Bills", type: "Fixed Income", status: "Not Connected" }
-                  ].map((platform) => (
-                    <Card key={platform.name}>
-                      <CardContent className="p-4">
-                        <div className="space-y-2">
-                          <h4 className="font-medium">{platform.name}</h4>
-                          <p className="text-sm text-muted-foreground">{platform.type}</p>
-                          <p className="text-sm text-orange-600">{platform.status}</p>
-                          <Button size="sm" variant="outline" className="w-full">
-                            Connect
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    {
+                      category: "Financial Services",
+                      platforms: [
+                        { name: "ChamaSoft", type: "Chama Management", status: "Not Connected" },
+                        { name: "Ndovu", type: "Digital Investment", status: "Not Connected" },
+                        { name: "M-Pesa", type: "Mobile Money", status: "Not Connected" },
+                      ],
+                    },
+                    {
+                      category: "Banking",
+                      platforms: [
+                        { name: "KCB Bank", type: "Banking", status: "Not Connected" },
+                        { name: "Equity Bank", type: "Banking", status: "Not Connected" },
+                      ],
+                    },
+                    {
+                      category: "Money Market Funds",
+                      platforms: [
+                        { name: "CIC MMF", type: "Money Market Fund", status: "Not Connected" },
+                        { name: "Cytonn MMF", type: "Money Market Fund", status: "Not Connected" },
+                        { name: "Sanlam MMF", type: "Money Market Fund", status: "Not Connected" },
+                      ],
+                    },
+                    {
+                      category: "REITs",
+                      platforms: [
+                        { name: "ILAM Fahari I-REIT", type: "REIT", status: "Not Connected" },
+                        { name: "Acorn D-REIT", type: "REIT", status: "Not Connected" },
+                      ],
+                    },
+                    {
+                      category: "Fixed Income",
+                      platforms: [
+                        { name: "Kenya Government Bonds", type: "Fixed Income", status: "Not Connected" },
+                        { name: "Kenya Treasury Bills", type: "Fixed Income", status: "Not Connected" },
+                      ],
+                    },
+                  ].map((group) => (
+                    <div key={group.category}>
+                      <h3 className="text-lg font-semibold mb-3">{group.category}</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {group.platforms.map((platform) => (
+                          <Card key={platform.name}>
+                            <CardContent className="p-4">
+                              <div className="space-y-2">
+                                <h4 className="font-medium">{platform.name}</h4>
+                                <p className="text-sm text-muted-foreground">{platform.type}</p>
+                                <p className="text-sm text-orange-600">{platform.status}</p>
+                                <Button size="sm" variant="outline" className="w-full">
+                                  Connect
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </CardContent>
