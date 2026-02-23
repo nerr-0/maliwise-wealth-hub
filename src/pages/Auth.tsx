@@ -134,9 +134,15 @@ const Auth = () => {
         description: "Please check your email to confirm your account",
       });
     } catch (error: any) {
+      const message = error?.message?.toLowerCase?.() || '';
+      const userMessage = message.includes('invalid login')
+        ? 'Invalid email or password'
+        : message.includes('already registered')
+        ? 'This email is already registered. Please sign in instead.'
+        : 'Something went wrong. Please try again.';
       toast({
         title: "Error",
-        description: error.message,
+        description: userMessage,
         variant: "destructive"
       });
     } finally {
@@ -183,9 +189,13 @@ const Auth = () => {
         description: "Successfully signed in",
       });
     } catch (error: any) {
+      const message = error?.message?.toLowerCase?.() || '';
+      const userMessage = message.includes('invalid login')
+        ? 'Invalid email or password'
+        : 'Unable to sign in. Please check your credentials and try again.';
       toast({
         title: "Error",
-        description: error.message,
+        description: userMessage,
         variant: "destructive"
       });
     } finally {

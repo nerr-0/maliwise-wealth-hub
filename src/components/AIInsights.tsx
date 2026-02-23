@@ -35,10 +35,10 @@ const AIInsights = () => {
       if (error) throw error;
 
       setInsights(data.insights);
-    } catch (error: any) {
+    } catch {
       toast({
         title: "Error",
-        description: error.message || "Failed to generate insights",
+        description: "Failed to generate insights. Please try again later.",
         variant: "destructive"
       });
     } finally {
