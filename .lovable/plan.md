@@ -1,33 +1,53 @@
 
 
-# Plan: Add Investment Product Platforms
+# Plan: Implement "Add Platform" Dialog with Full Kenyan Investment Options
 
-Add MMF (Money Market Funds), REITs, Bonds, and Bills to the Platforms section in the dashboard alongside the existing financial service platforms.
+## Overview
+Make the "Add" button in each platform category functional by opening a dialog that presents a curated list of additional Kenyan investment platforms the user can add to their dashboard.
 
-## Changes
+## Implementation
 
-**File: `src/pages/EnhancedDashboard.tsx`**
+### 1. Create a new component: `src/components/AddPlatformDialog.tsx`
 
-Add the following entries to the platforms array (around line 425):
+A dialog component that:
+- Accepts the current category name as a prop
+- Displays a searchable list of additional platforms for that category
+- Lets the user select one or type a custom name
+- Adds the selected platform to the displayed list
 
-- **Money Market Funds (MMFs)** -- Type: "Money Market Fund", e.g. CIC MMF, Cytonn MMF, Sanlam MMF
-- **REITs** -- Type: "Real Estate Investment Trust", e.g. ILAM Fahari I-REIT, Acorn D-REIT
-- **Government Bonds** -- Type: "Fixed Income", e.g. Kenya Government Bonds
-- **Treasury Bills** -- Type: "Fixed Income", e.g. Kenya Treasury Bills
+The dialog will contain a hardcoded options map:
 
-These will appear as additional cards in the same grid layout, each with a "Connect" button and "Not Connected" status, matching the existing platform card style.
+```
+Financial Services: M-Pesa, Britam, Old Mutual, Jubilee Insurance, ICEA Lion, Stanbic
+Banking: Co-operative Bank, NCBA Bank, Absa Bank Kenya, DTB Bank, Standard Chartered, I&M Bank, Family Bank
+Money Market Funds: Sanlam MMF, Britam MMF, Old Mutual MMF, GenAfrica MMF, Nabo Capital MMF, Zimele MMF, ICEA Lion MMF, Madison MMF, Dry Associates MMF, Apollo MMF, AA Kenya MMF
+REITs: Acorn I-REIT (additional class), Vaal REIT
+Fixed Income: Infrastructure Bonds, M-Akiba, Corporate Bonds, Savings Bonds, Green Bonds
+```
 
-The final platforms list will be:
-1. ChamaSoft (Chama Management)
-2. Ndovu (Digital Investment)
-3. M-Pesa (Mobile Money)
-4. KCB Bank (Banking)
-5. Equity Bank (Banking)
-6. CIC MMF (Money Market Fund)
-7. Cytonn MMF (Money Market Fund)
-8. Sanlam MMF (Money Market Fund)
-9. ILAM Fahari I-REIT (REIT)
-10. Acorn D-REIT (REIT)
-11. Kenya Government Bonds (Fixed Income)
-12. Kenya Treasury Bills (Fixed Income)
+The dialog will include:
+- A search/filter input at the top
+- A scrollable list of platform options with radio-style selection
+- A "Custom" option with a text input for platforms not in the list
+- "Cancel" and "Add Platform" buttons
+
+### 2. Add state management in `EnhancedDashboard.tsx`
+
+- Add a `useState` for `additionalPlatforms` (an object keyed by category, with arrays of added platform objects)
+- Add a `useState` for controlling which category's dialog is open
+- Merge `additionalPlatforms` with the hardcoded base platforms when rendering
+- Wire the "Add" card's `onClick` to open the dialog for that category
+
+### 3. Update the Platforms tab rendering
+
+- The dashed "Add" card gets an `onClick` handler to open the `AddPlatformDialog`
+- Newly added platforms render as regular platform cards (same style as existing ones) with "Not Connected" status
+- Users can add multiple platforms per category
+
+## Technical Details
+
+- **No database changes needed** -- added platforms are stored in component state for now (can be persisted to Supabase later)
+- **No new dependencies** -- uses existing Dialog, Input, Button, ScrollArea components from the UI library
+- **Files to create**: `src/components/AddPlatformDialog.tsx`
+- **Files to modify**: `src/pages/EnhancedDashboard.tsx`
 
