@@ -21,6 +21,7 @@ import { useRealtimePortfolio } from "@/hooks/useRealtimePortfolio";
 import { useMarketPrices } from "@/hooks/useMarketPrices";
 import TransactionForm from "@/components/TransactionForm";
 import AIInsights from "@/components/AIInsights";
+import AddPlatformDialog from "@/components/AddPlatformDialog";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -36,6 +37,8 @@ const EnhancedDashboard = () => {
   const [headerVisible, setHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [activeTab, setActiveTab] = useState("overview");
+  const [dialogCategory, setDialogCategory] = useState<string | null>(null);
+  const [additionalPlatforms, setAdditionalPlatforms] = useState<Record<string, Array<{ name: string; type: string }>>>({});
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -457,35 +460,64 @@ const EnhancedDashboard = () => {
                         { name: "Kenya Treasury Bills", type: "Fixed Income", status: "Not Connected" },
                       ],
                     },
-                  ].map((group) => (
-                    <div key={group.category}>
-                      <h3 className="text-lg font-semibold mb-3">{group.category}</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {group.platforms.map((platform) => (
-                          <Card key={platform.name}>
-                            <CardContent className="p-4">
-                              <div className="space-y-2">
-                                <h4 className="font-medium">{platform.name}</h4>
-                                <p className="text-sm text-muted-foreground">{platform.type}</p>
-                                <p className="text-sm text-orange-600">{platform.status}</p>
-                                <Button size="sm" variant="outline" className="w-full">
-                                  Connect
-                                </Button>
-                              </div>
+                  ].map((group) => {
+                    const extra = additionalPlatforms[group.category] || [];
+                    const allPlatforms = [...group.platforms, ...extra.map(p => ({ ...p, status: "Not Connected" }))];
+                    const existingNames = allPlatforms.map(p => p.name);
+
+                    return (
+                      <div key={group.category}>
+                        <h3 className="text-lg font-semibold mb-3">{group.category}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {allPlatforms.map((platform) => (
+                            <Card key={platform.name}>
+                              <CardContent className="p-4">
+                                <div className="space-y-2">
+                                  <h4 className="font-medium">{platform.name}</h4>
+                                  <p className="text-sm text-muted-foreground">{platform.type}</p>
+                                  <p className="text-sm text-orange-600">{platform.status}</p>
+                                  <Button size="sm" variant="outline" className="w-full">
+                                    Connect
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                          <Card
+                            className="border-dashed border-2 border-muted-foreground/25 hover:border-primary/50 transition-colors cursor-pointer"
+                            onClick={() => setDialogCategory(group.category)}
+                          >
+                            <CardContent className="p-4 flex flex-col items-center justify-center h-full min-h-[120px]">
+                              <Plus className="w-8 h-8 text-muted-foreground mb-2" />
+                              <p className="text-sm font-medium text-muted-foreground">Add {group.category}</p>
+                              <p className="text-xs text-muted-foreground/70">Connect your preferred platform</p>
                             </CardContent>
                           </Card>
-                        ))}
-                        <Card className="border-dashed border-2 border-muted-foreground/25 hover:border-primary/50 transition-colors cursor-pointer">
-                          <CardContent className="p-4 flex flex-col items-center justify-center h-full min-h-[120px]">
-                            <Plus className="w-8 h-8 text-muted-foreground mb-2" />
-                            <p className="text-sm font-medium text-muted-foreground">Add {group.category}</p>
-                            <p className="text-xs text-muted-foreground/70">Connect your preferred platform</p>
-                          </CardContent>
-                        </Card>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
+
+                <AddPlatformDialog
+                  open={!!dialogCategory}
+                  onOpenChange={(open) => { if (!open) setDialogCategory(null); }}
+                  category={dialogCategory || ""}
+                  existingNames={
+                    dialogCategory
+                      ? [
+                          ...(additionalPlatforms[dialogCategory] || []).map(p => p.name),
+                          // include base platform names too
+                        ]
+                      : []
+                  }
+                  onAdd={(platform) => {
+                    setAdditionalPlatforms(prev => ({
+                      ...prev,
+                      [dialogCategory!]: [...(prev[dialogCategory!] || []), platform],
+                    }));
+                  }}
+                />
               </CardContent>
             </Card>
           </TabsContent>
