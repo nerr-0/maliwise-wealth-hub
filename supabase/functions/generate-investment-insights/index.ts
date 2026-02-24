@@ -41,8 +41,14 @@ serve(async (req) => {
 
     const { portfolioData, transactions } = await req.json();
 
-    if (!portfolioData || !transactions) {
-      throw new Error('Portfolio data and transactions are required');
+    if (!portfolioData || !Array.isArray(portfolioData) || portfolioData.length === 0) {
+      throw new Error('Valid portfolio data array is required');
+    }
+    if (!transactions || !Array.isArray(transactions)) {
+      throw new Error('Valid transactions array is required');
+    }
+    if (portfolioData.length > 100 || transactions.length > 100) {
+      throw new Error('Too many items. Maximum 100 holdings and 100 transactions.');
     }
 
     // Prepare AI prompt with portfolio data

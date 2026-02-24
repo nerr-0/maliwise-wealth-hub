@@ -104,10 +104,10 @@ export const useAddTransaction = () => {
         description: "Transaction added successfully",
       });
     },
-    onError: (error: any) => {
+    onError: () => {
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to add transaction. Please try again.",
         variant: "destructive",
       });
     },

@@ -37,8 +37,19 @@ Deno.serve(async (req) => {
     }
 
     const { symbols } = await req.json();
-    if (!Array.isArray(symbols) || symbols.length === 0) {
-      return new Response(JSON.stringify({ error: "symbols array required" }), {
+    if (!Array.isArray(symbols) || symbols.length === 0 || symbols.length > 10) {
+      return new Response(JSON.stringify({ error: "symbols must be an array of 1-10 items" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Validate each symbol is a string with reasonable length
+    const validSymbols = symbols.every(
+      (s: unknown) => typeof s === "string" && s.length > 0 && s.length <= 20 && /^[A-Za-z0-9.\-]+$/.test(s)
+    );
+    if (!validSymbols) {
+      return new Response(JSON.stringify({ error: "Invalid symbol format" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -77,7 +88,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+    console.error("fetch-market-prices error:", err);
+    return new Response(JSON.stringify({ error: "Failed to fetch market prices" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
