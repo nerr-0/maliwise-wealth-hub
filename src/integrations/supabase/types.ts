@@ -147,6 +147,7 @@ export type Database = {
           created_at: string | null
           fees: number | null
           id: string
+          notes: string | null
           platform_id: string | null
           price_per_unit: number | null
           quantity: number | null
@@ -162,6 +163,7 @@ export type Database = {
           created_at?: string | null
           fees?: number | null
           id?: string
+          notes?: string | null
           platform_id?: string | null
           price_per_unit?: number | null
           quantity?: number | null
@@ -177,6 +179,7 @@ export type Database = {
           created_at?: string | null
           fees?: number | null
           id?: string
+          notes?: string | null
           platform_id?: string | null
           price_per_unit?: number | null
           quantity?: number | null
