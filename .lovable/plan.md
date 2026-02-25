@@ -1,53 +1,120 @@
 
 
-# Plan: Implement "Add Platform" Dialog with Full Kenyan Investment Options
+# Plan: Refocus Transactions Tab for Manual/Alternative Assets
 
 ## Overview
-Make the "Add" button in each platform category functional by opening a dialog that presents a curated list of additional Kenyan investment platforms the user can add to their dashboard.
+Redesign the Transactions tab to serve as a ledger for assets that cannot be automatically fetched from broker or platform APIs -- things like motor vehicles, land, art, jewelry, personal loans, and other alternative investments. Stock/bond/REIT transactions will eventually come from connected platforms, so the manual form should focus on these "off-platform" asset types.
 
-## Implementation
+## Changes
 
-### 1. Create a new component: `src/components/AddPlatformDialog.tsx`
+### 1. Update asset types in TransactionForm
+Replace the current asset type options (stock, bond, reit, mmf, etc.) with categories suited to manual entry:
 
-A dialog component that:
-- Accepts the current category name as a prop
-- Displays a searchable list of additional platforms for that category
-- Lets the user select one or type a custom name
-- Adds the selected platform to the displayed list
+- **Motor Vehicle** -- cars, trucks, motorcycles
+- **Land** -- plots, agricultural land
+- **Real Estate (Property)** -- houses, apartments, commercial buildings
+- **Business** -- business investments, equity in private companies
+- **Art & Collectibles** -- paintings, antiques, jewelry
+- **Livestock** -- cattle, poultry, etc.
+- **Personal Loan (Given)** -- money lent to someone
+- **Other** -- catch-all for anything else
 
-The dialog will contain a hardcoded options map:
+The Zod schema and select dropdown will be updated to reflect these new categories.
 
-```
-Financial Services: M-Pesa, Britam, Old Mutual, Jubilee Insurance, ICEA Lion, Stanbic
-Banking: Co-operative Bank, NCBA Bank, Absa Bank Kenya, DTB Bank, Standard Chartered, I&M Bank, Family Bank
-Money Market Funds: Sanlam MMF, Britam MMF, Old Mutual MMF, GenAfrica MMF, Nabo Capital MMF, Zimele MMF, ICEA Lion MMF, Madison MMF, Dry Associates MMF, Apollo MMF, AA Kenya MMF
-REITs: Acorn I-REIT (additional class), Vaal REIT
-Fixed Income: Infrastructure Bonds, M-Akiba, Corporate Bonds, Savings Bonds, Green Bonds
-```
+### 2. Update transaction types
+Simplify to: **Purchase**, **Sale**, **Valuation Update** (to record a new estimated value), and **Income** (e.g., rental income from property, dividends from a private business).
 
-The dialog will include:
-- A search/filter input at the top
-- A scrollable list of platform options with radio-style selection
-- A "Custom" option with a text input for platforms not in the list
-- "Cancel" and "Add Platform" buttons
+### 3. Add descriptive context to the tab
+Add an explanatory banner at the top of the Transactions section:
+> "Record purchases and sales of assets that aren't tracked by connected platforms -- like vehicles, land, property, or personal investments."
 
-### 2. Add state management in `EnhancedDashboard.tsx`
+### 4. Database trigger for portfolio sync
+Create a Postgres trigger so that when a "purchase" transaction is recorded, a corresponding holding is automatically created/updated in `portfolio_holdings`. "Sale" transactions reduce or remove the holding. This requires:
+- A new SQL migration with the trigger function
+- A DELETE RLS policy on `portfolio_holdings` (currently missing)
 
-- Add a `useState` for `additionalPlatforms` (an object keyed by category, with arrays of added platform objects)
-- Add a `useState` for controlling which category's dialog is open
-- Merge `additionalPlatforms` with the hardcoded base platforms when rendering
-- Wire the "Add" card's `onClick` to open the dialog for that category
-
-### 3. Update the Platforms tab rendering
-
-- The dashed "Add" card gets an `onClick` handler to open the `AddPlatformDialog`
-- Newly added platforms render as regular platform cards (same style as existing ones) with "Not Connected" status
-- Users can add multiple platforms per category
+### 5. Add optional fields
+Add a "Notes/Description" field to the form so users can record details like location of land, vehicle registration number, etc. This will require adding a `notes` column to the `transactions` table.
 
 ## Technical Details
 
-- **No database changes needed** -- added platforms are stored in component state for now (can be persisted to Supabase later)
-- **No new dependencies** -- uses existing Dialog, Input, Button, ScrollArea components from the UI library
-- **Files to create**: `src/components/AddPlatformDialog.tsx`
-- **Files to modify**: `src/pages/EnhancedDashboard.tsx`
+### Files to modify
+- `src/components/TransactionForm.tsx` -- new asset types, transaction types, notes field, updated validation
+- `src/pages/EnhancedDashboard.tsx` -- add explanatory banner to the Transactions tab section
+
+### Database migration (SQL)
+```sql
+-- Add notes column to transactions
+ALTER TABLE transactions ADD COLUMN IF NOT EXISTS notes text;
+
+-- Add DELETE policy for portfolio_holdings
+CREATE POLICY "Users can delete own holdings"
+  ON portfolio_holdings FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Trigger function: sync holdings from transactions
+CREATE OR REPLACE FUNCTION update_holdings_from_transaction()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = 'public'
+AS $$
+BEGIN
+  IF NEW.transaction_type = 'purchase' THEN
+    INSERT INTO portfolio_holdings (user_id, asset_name, asset_type, quantity, average_cost, current_value)
+    VALUES (
+      NEW.user_id, NEW.asset_name, NEW.asset_type,
+      COALESCE(NEW.quantity, 1),
+      NEW.amount,
+      NEW.amount
+    )
+    ON CONFLICT ON CONSTRAINT portfolio_holdings_user_asset_unique
+    DO UPDATE SET
+      quantity = portfolio_holdings.quantity + COALESCE(NEW.quantity, 1),
+      average_cost = (
+        (portfolio_holdings.average_cost * portfolio_holdings.quantity)
+        + NEW.amount
+      ) / (portfolio_holdings.quantity + COALESCE(NEW.quantity, 1)),
+      current_value = portfolio_holdings.current_value + NEW.amount,
+      last_updated = now();
+
+  ELSIF NEW.transaction_type = 'sale' THEN
+    UPDATE portfolio_holdings
+    SET quantity = quantity - COALESCE(NEW.quantity, 1),
+        current_value = current_value - NEW.amount,
+        last_updated = now()
+    WHERE user_id = NEW.user_id
+      AND asset_name = NEW.asset_name
+      AND asset_type = NEW.asset_type;
+
+    DELETE FROM portfolio_holdings
+    WHERE user_id = NEW.user_id
+      AND asset_name = NEW.asset_name
+      AND quantity <= 0;
+
+  ELSIF NEW.transaction_type = 'valuation' THEN
+    UPDATE portfolio_holdings
+    SET current_value = NEW.amount,
+        last_updated = now()
+    WHERE user_id = NEW.user_id
+      AND asset_name = NEW.asset_name
+      AND asset_type = NEW.asset_type;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+-- Unique constraint needed for upsert
+ALTER TABLE portfolio_holdings
+  ADD CONSTRAINT portfolio_holdings_user_asset_unique
+  UNIQUE (user_id, asset_name, asset_type);
+
+-- Attach trigger
+CREATE TRIGGER on_transaction_insert
+  AFTER INSERT ON transactions
+  FOR EACH ROW
+  EXECUTE FUNCTION update_holdings_from_transaction();
+```
+
+### Files unchanged
+- `src/hooks/usePortfolio.tsx` -- already invalidates both query caches after transaction insert
 
