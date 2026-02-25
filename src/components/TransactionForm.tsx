@@ -3,17 +3,17 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAddTransaction } from '@/hooks/usePortfolio';
 import { useToast } from '@/hooks/use-toast';
 
-// Validation schema for transaction form
 const transactionSchema = z.object({
-  transaction_type: z.enum(['buy', 'sell', 'dividend', 'deposit', 'withdrawal'], {
+  transaction_type: z.enum(['purchase', 'sale', 'valuation', 'income'], {
     required_error: 'Please select a transaction type',
   }),
-  asset_type: z.enum(['stock', 'bond', 'reit', 'mmf', 'chama', 'sacco', 'treasury_bill'], {
+  asset_type: z.enum(['motor_vehicle', 'land', 'real_estate', 'business', 'art_collectibles', 'livestock', 'personal_loan', 'other'], {
     required_error: 'Please select an asset type',
   }),
   asset_name: z.string()
@@ -27,9 +27,28 @@ const transactionSchema = z.object({
   price_per_unit: z.number().positive('Price must be greater than 0').optional(),
   fees: z.number().min(0, 'Fees cannot be negative').max(1000000, 'Fees exceed maximum limit').optional(),
   transaction_date: z.string().min(1, 'Transaction date is required'),
+  notes: z.string().max(500, 'Notes must be less than 500 characters').optional(),
 });
 
 type TransactionFormData = z.infer<typeof transactionSchema>;
+
+const ASSET_TYPE_LABELS: Record<string, string> = {
+  motor_vehicle: 'Motor Vehicle',
+  land: 'Land',
+  real_estate: 'Real Estate (Property)',
+  business: 'Business',
+  art_collectibles: 'Art & Collectibles',
+  livestock: 'Livestock',
+  personal_loan: 'Personal Loan (Given)',
+  other: 'Other',
+};
+
+const TRANSACTION_TYPE_LABELS: Record<string, string> = {
+  purchase: 'Purchase',
+  sale: 'Sale',
+  valuation: 'Valuation Update',
+  income: 'Income',
+};
 
 const TransactionForm = () => {
   const [formData, setFormData] = useState({
@@ -41,6 +60,7 @@ const TransactionForm = () => {
     price_per_unit: '',
     fees: '',
     transaction_date: new Date().toISOString().split('T')[0],
+    notes: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -51,7 +71,6 @@ const TransactionForm = () => {
     e.preventDefault();
     setErrors({});
     
-    // Parse and validate form data
     const dataToValidate = {
       transaction_type: formData.transaction_type || undefined,
       asset_type: formData.asset_type || undefined,
@@ -61,6 +80,7 @@ const TransactionForm = () => {
       price_per_unit: formData.price_per_unit ? parseFloat(formData.price_per_unit) : undefined,
       fees: formData.fees ? parseFloat(formData.fees) : undefined,
       transaction_date: formData.transaction_date,
+      notes: formData.notes.trim() || undefined,
     };
 
     const result = transactionSchema.safeParse(dataToValidate);
@@ -92,7 +112,6 @@ const TransactionForm = () => {
       status: 'completed',
     });
 
-    // Reset form
     setFormData({
       transaction_type: '',
       asset_name: '',
@@ -102,15 +121,16 @@ const TransactionForm = () => {
       price_per_unit: '',
       fees: '',
       transaction_date: new Date().toISOString().split('T')[0],
+      notes: '',
     });
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Add Transaction</CardTitle>
+        <CardTitle>Record Asset Transaction</CardTitle>
         <CardDescription>
-          Record a new investment transaction
+          Log purchases, sales, or valuations for assets not tracked by connected platforms
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -126,11 +146,9 @@ const TransactionForm = () => {
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="buy">Buy</SelectItem>
-                  <SelectItem value="sell">Sell</SelectItem>
-                  <SelectItem value="dividend">Dividend</SelectItem>
-                  <SelectItem value="deposit">Deposit</SelectItem>
-                  <SelectItem value="withdrawal">Withdrawal</SelectItem>
+                  {Object.entries(TRANSACTION_TYPE_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {errors.transaction_type && (
@@ -148,13 +166,9 @@ const TransactionForm = () => {
                   <SelectValue placeholder="Select asset type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="stock">Stock</SelectItem>
-                  <SelectItem value="bond">Bond</SelectItem>
-                  <SelectItem value="reit">REIT</SelectItem>
-                  <SelectItem value="mmf">Money Market Fund</SelectItem>
-                  <SelectItem value="chama">Chama</SelectItem>
-                  <SelectItem value="sacco">SACCO</SelectItem>
-                  <SelectItem value="treasury_bill">Treasury Bill</SelectItem>
+                  {Object.entries(ASSET_TYPE_LABELS).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>{label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               {errors.asset_type && (
@@ -168,7 +182,7 @@ const TransactionForm = () => {
                 id="asset_name"
                 value={formData.asset_name}
                 onChange={(e) => setFormData(prev => ({ ...prev, asset_name: e.target.value }))}
-                placeholder="e.g., Safaricom, KCB Group"
+                placeholder="e.g., Toyota Hilux, Kitengela Plot"
                 maxLength={100}
                 className={errors.asset_name ? 'border-destructive' : ''}
               />
@@ -204,28 +218,11 @@ const TransactionForm = () => {
                 min="0.01"
                 value={formData.quantity}
                 onChange={(e) => setFormData(prev => ({ ...prev, quantity: e.target.value }))}
-                placeholder="Number of shares/units"
+                placeholder="e.g., 1 for a car, 2 for plots"
                 className={errors.quantity ? 'border-destructive' : ''}
               />
               {errors.quantity && (
                 <p className="text-sm text-destructive">{errors.quantity}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="price_per_unit">Price per Unit (Optional)</Label>
-              <Input
-                id="price_per_unit"
-                type="number"
-                step="0.01"
-                min="0.01"
-                value={formData.price_per_unit}
-                onChange={(e) => setFormData(prev => ({ ...prev, price_per_unit: e.target.value }))}
-                placeholder="0.00"
-                className={errors.price_per_unit ? 'border-destructive' : ''}
-              />
-              {errors.price_per_unit && (
-                <p className="text-sm text-destructive">{errors.price_per_unit}</p>
               )}
             </div>
 
@@ -239,7 +236,7 @@ const TransactionForm = () => {
                 max="1000000"
                 value={formData.fees}
                 onChange={(e) => setFormData(prev => ({ ...prev, fees: e.target.value }))}
-                placeholder="0.00"
+                placeholder="e.g., stamp duty, legal fees"
                 className={errors.fees ? 'border-destructive' : ''}
               />
               {errors.fees && (
@@ -247,7 +244,7 @@ const TransactionForm = () => {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="transaction_date">Transaction Date</Label>
               <Input
                 id="transaction_date"
@@ -260,6 +257,22 @@ const TransactionForm = () => {
                 <p className="text-sm text-destructive">{errors.transaction_date}</p>
               )}
             </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="notes">Notes (Optional)</Label>
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                placeholder="e.g., Location, registration number, description..."
+                maxLength={500}
+                className={errors.notes ? 'border-destructive' : ''}
+                rows={3}
+              />
+              {errors.notes && (
+                <p className="text-sm text-destructive">{errors.notes}</p>
+              )}
+            </div>
           </div>
 
           <Button 
@@ -267,7 +280,7 @@ const TransactionForm = () => {
             className="w-full"
             disabled={addTransaction.isPending}
           >
-            {addTransaction.isPending ? 'Adding...' : 'Add Transaction'}
+            {addTransaction.isPending ? 'Recording...' : 'Record Transaction'}
           </Button>
         </form>
       </CardContent>

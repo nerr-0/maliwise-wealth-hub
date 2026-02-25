@@ -379,6 +379,11 @@ const EnhancedDashboard = () => {
           </TabsContent>
 
           <TabsContent value="transactions" className="space-y-4">
+            <div className="rounded-lg border bg-muted/50 p-4 mb-2">
+              <p className="text-sm text-muted-foreground">
+                Record purchases and sales of assets that aren't tracked by connected platforms — like vehicles, land, property, or personal investments. These transactions automatically update your portfolio holdings.
+              </p>
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <TransactionForm />
               
@@ -398,11 +403,11 @@ const EnhancedDashboard = () => {
                         </div>
                         <div className="text-right">
                           <p className={`font-medium ${
-                            transaction.transaction_type === 'buy' ? 'text-red-600' : 'text-green-600'
+                            transaction.transaction_type === 'purchase' ? 'text-red-600' : 'text-green-600'
                           }`}>
-                            {transaction.transaction_type === 'buy' ? '-' : '+'}KES {transaction.amount.toLocaleString()}
+                            {transaction.transaction_type === 'purchase' ? '-' : '+'}KES {transaction.amount.toLocaleString()}
                           </p>
-                          <p className="text-sm text-muted-foreground">{transaction.status}</p>
+                          <p className="text-sm text-muted-foreground capitalize">{transaction.transaction_type}</p>
                         </div>
                       </div>
                     ))}
