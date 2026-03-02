@@ -242,9 +242,9 @@ const EnhancedDashboard = () => {
               {/* Portfolio Performance Chart */}
               <Card className="lg:col-span-2">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <CardTitle>Portfolio Performance</CardTitle>
-                    <div className="flex space-x-2">
+                    <div className="flex flex-wrap gap-1 sm:gap-2">
                       {["1M", "3M", "6M", "1Y", "ALL"].map((period) => (
                         <Button
                           key={period}
@@ -259,7 +259,7 @@ const EnhancedDashboard = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <ChartContainer config={chartConfig} className="h-[300px]">
+                  <ChartContainer config={chartConfig} className="h-[300px] w-full aspect-auto">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={portfolioData}>
                         <CartesianGrid strokeDasharray="3 3" />
@@ -285,7 +285,7 @@ const EnhancedDashboard = () => {
                   <CardTitle>Asset Allocation</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ChartContainer config={chartConfig} className="h-[250px]">
+                  <ChartContainer config={chartConfig} className="h-[250px] w-full aspect-auto">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
