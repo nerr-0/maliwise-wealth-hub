@@ -33,7 +33,8 @@ const EnhancedDashboard = () => {
   const { prices: marketPrices, isLoading: pricesLoading, lastUpdated: pricesLastUpdated } = useMarketPrices(holdings);
   const [firstName, setFirstName] = useState("Investor");
   
-  const [selectedPeriod, setSelectedPeriod] = useState("6M");
+  const [selectedPeriod, setSelectedPeriod] = useState("1Y");
+  const [showGreeting, setShowGreeting] = useState(true);
   const [headerVisible, setHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [activeTab, setActiveTab] = useState("overview");
@@ -54,6 +55,11 @@ const EnhancedDashboard = () => {
     };
     fetchProfile();
   }, [user?.id]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowGreeting(false), 4000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const controlHeader = () => {
@@ -97,14 +103,25 @@ const EnhancedDashboard = () => {
   }, [] as Array<{ name: string; value: number; color: string }>);
 
   // Mock portfolio performance data (would come from historical data in real app)
-  const portfolioData = [
-    { month: "Jan", value: totalPortfolioValue * 0.8, growth: 5.2 },
-    { month: "Feb", value: totalPortfolioValue * 0.85, growth: 6.8 },
-    { month: "Mar", value: totalPortfolioValue * 0.9, growth: -3.0 },
-    { month: "Apr", value: totalPortfolioValue * 0.95, growth: 7.5 },
-    { month: "May", value: totalPortfolioValue * 0.98, growth: 2.9 },
-    { month: "Jun", value: totalPortfolioValue, growth: 5.2 }
+  const allPortfolioData = [
+    { month: "Jan", value: totalPortfolioValue * 0.72, growth: 3.1 },
+    { month: "Feb", value: totalPortfolioValue * 0.75, growth: 4.2 },
+    { month: "Mar", value: totalPortfolioValue * 0.78, growth: -1.5 },
+    { month: "Apr", value: totalPortfolioValue * 0.80, growth: 2.6 },
+    { month: "May", value: totalPortfolioValue * 0.83, growth: 3.8 },
+    { month: "Jun", value: totalPortfolioValue * 0.85, growth: -0.5 },
+    { month: "Jul", value: totalPortfolioValue * 0.88, growth: 5.2 },
+    { month: "Aug", value: totalPortfolioValue * 0.90, growth: 2.3 },
+    { month: "Sep", value: totalPortfolioValue * 0.93, growth: 3.4 },
+    { month: "Oct", value: totalPortfolioValue * 0.95, growth: -2.1 },
+    { month: "Nov", value: totalPortfolioValue * 0.98, growth: 4.7 },
+    { month: "Dec", value: totalPortfolioValue, growth: 2.9 },
   ];
+
+  const periodSliceMap: Record<string, number> = {
+    "1M": 1, "3M": 3, "6M": 6, "1Y": 12, "ALL": 12
+  };
+  const portfolioData = allPortfolioData.slice(-periodSliceMap[selectedPeriod]);
 
   const chartConfig = {
     value: {
@@ -127,43 +144,60 @@ const EnhancedDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      {/* Header */}
+      {/* Greeting Banner */}
+      {showGreeting && (
+        <div className="bg-primary/10 border-b border-primary/20 animate-in fade-in duration-300">
+          <div className="container mx-auto px-4 py-3 flex items-center justify-center gap-2">
+            <h1 className="text-lg md:text-xl font-semibold text-foreground">
+              Welcome back, {firstName} 👋
+            </h1>
+          </div>
+        </div>
+      )}
+
+      {/* Navigation Bar */}
       <div className={`border-b bg-card/50 backdrop-blur-sm sticky top-0 z-40 transition-transform duration-300 ${
         headerVisible ? 'translate-y-0' : '-translate-y-full'
       }`}>
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-2">
           <div className="flex items-center justify-between">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <h1 className="text-xl md:text-2xl font-bold text-foreground truncate">
-                    Welcome back, {firstName}
-                  </h1>
-                  <Badge variant="outline" className="border-green-500 text-green-600 gap-1 flex-shrink-0">
-                    <Radio className="w-3 h-3 animate-pulse" />
-                    Live
-                  </Badge>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5">
+                <div className="w-6 h-6 bg-accent rounded-md flex items-center justify-center">
+                  <span className="text-accent-foreground font-bold text-sm">M</span>
                 </div>
-                <p className="text-muted-foreground text-sm hidden sm:block">
-                  Manage your Kenyan investment portfolio
-                  {pricesLastUpdated && (
-                    <span className="ml-2 text-xs">
-                      · Prices updated {formatDistanceToNow(pricesLastUpdated, { addSuffix: true })}
-                    </span>
-                  )}
-                </p>
+                <span className="font-semibold text-foreground hidden sm:inline">MaliWise</span>
+              </div>
+              <Radio className="w-3 h-3 text-green-500 animate-pulse flex-shrink-0" />
+              <nav className="hidden md:flex items-center gap-1">
+                {[
+                  { label: "Overview", value: "overview" },
+                  { label: "Transactions", value: "transactions" },
+                  { label: "AI Insights", value: "insights" },
+                  { label: "Platforms", value: "platforms" },
+                ].map((tab) => (
+                  <Button
+                    key={tab.value}
+                    variant={activeTab === tab.value ? "secondary" : "ghost"}
+                    size="sm"
+                    onClick={() => setActiveTab(tab.value)}
+                    className="text-xs"
+                  >
+                    {tab.label}
+                  </Button>
+                ))}
+              </nav>
             </div>
-            <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
-              <Button variant="outline" size="sm" className="hidden sm:flex">
-                <Bell className="w-4 h-4 mr-2" />
-                Alerts
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Button variant="ghost" size="icon" className="hidden sm:flex h-8 w-8">
+                <Bell className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="sm" className="hidden sm:flex">
-                <Settings className="w-4 h-4 mr-2" />
-                Settings
+              <Button variant="ghost" size="icon" className="hidden sm:flex h-8 w-8">
+                <Settings className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={signOut}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
+              <Button variant="ghost" size="sm" onClick={signOut} className="text-xs">
+                <LogOut className="w-4 h-4 mr-1" />
+                <span className="hidden sm:inline">Sign Out</span>
               </Button>
             </div>
           </div>
