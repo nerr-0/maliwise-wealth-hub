@@ -53,6 +53,19 @@ const PLATFORM_OPTIONS: Record<string, string[]> = {
     "Savings Bonds",
     "Green Bonds",
   ],
+  "Equities (Stock Brokers)": [
+    "AIB-AXYS Africa",
+    "Faida Investment Bank",
+    "SBG Securities",
+    "Genghis Capital",
+    "Standard Investment Bank",
+    "ABC Capital",
+    "Dyer & Blair",
+    "EFG Hermes",
+    "KCB Capital",
+    "NCBA Investment Bank",
+    "Kingdom Securities",
+  ],
 };
 
 interface AddPlatformDialogProps {

@@ -499,6 +499,13 @@ const EnhancedDashboard = () => {
                         { name: "Kenya Treasury Bills", type: "Fixed Income", status: "Not Connected" },
                       ],
                     },
+                    {
+                      category: "Equities (Stock Brokers)",
+                      platforms: [
+                        { name: "AIB-AXYS Africa", type: "Stock Broker", status: "Not Connected" },
+                        { name: "Faida Investment Bank", type: "Stock Broker", status: "Not Connected" },
+                      ],
+                    },
                   ].map((group) => {
                     const extra = additionalPlatforms[group.category] || [];
                     const allPlatforms = [...group.platforms, ...extra.map(p => ({ ...p, status: "Not Connected" }))];
