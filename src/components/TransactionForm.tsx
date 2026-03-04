@@ -13,7 +13,7 @@ const transactionSchema = z.object({
   transaction_type: z.enum(['purchase', 'sale', 'valuation', 'income'], {
     required_error: 'Please select a transaction type',
   }),
-  asset_type: z.enum(['motor_vehicle', 'land', 'real_estate', 'business', 'art_collectibles', 'livestock', 'personal_loan', 'other'], {
+  asset_type: z.enum(['motor_vehicle', 'land', 'real_estate', 'business', 'art_collectibles', 'livestock', 'personal_loan', 'equities', 'other'], {
     required_error: 'Please select an asset type',
   }),
   asset_name: z.string()
@@ -40,6 +40,7 @@ const ASSET_TYPE_LABELS: Record<string, string> = {
   art_collectibles: 'Art & Collectibles',
   livestock: 'Livestock',
   personal_loan: 'Personal Loan (Given)',
+  equities: 'Equities (Stocks/Shares)',
   other: 'Other',
 };
 
