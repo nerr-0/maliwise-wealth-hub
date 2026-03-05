@@ -66,6 +66,12 @@ const PLATFORM_OPTIONS: Record<string, string[]> = {
     "NCBA Investment Bank",
     "Kingdom Securities",
   ],
+  "International / Offshore Brokers": [
+    "Finch",
+    "Alpaca",
+    "Simul8or",
+    "Interactive Brokers",
+  ],
 };
 
 interface AddPlatformDialogProps {

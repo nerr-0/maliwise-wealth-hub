@@ -1,0 +1,4 @@
+
+ALTER TABLE public.portfolio_holdings ADD COLUMN IF NOT EXISTS currency TEXT NOT NULL DEFAULT 'KES';
+ALTER TABLE public.portfolio_holdings ADD COLUMN IF NOT EXISTS source TEXT NOT NULL DEFAULT 'manual';
+ALTER TABLE public.transactions ADD COLUMN IF NOT EXISTS currency TEXT NOT NULL DEFAULT 'KES';
