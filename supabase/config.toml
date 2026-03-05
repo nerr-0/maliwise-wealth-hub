@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.generate-investment-insights]
 verify_jwt = false
+
+[functions.fetch-broker-holdings]
+verify_jwt = false

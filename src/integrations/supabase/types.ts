@@ -64,11 +64,13 @@ export type Database = {
           asset_type: string
           average_cost: number | null
           created_at: string | null
+          currency: string
           current_value: number | null
           id: string
           last_updated: string | null
           platform_id: string | null
           quantity: number
+          source: string
           user_id: string
         }
         Insert: {
@@ -76,11 +78,13 @@ export type Database = {
           asset_type: string
           average_cost?: number | null
           created_at?: string | null
+          currency?: string
           current_value?: number | null
           id?: string
           last_updated?: string | null
           platform_id?: string | null
           quantity: number
+          source?: string
           user_id: string
         }
         Update: {
@@ -88,11 +92,13 @@ export type Database = {
           asset_type?: string
           average_cost?: number | null
           created_at?: string | null
+          currency?: string
           current_value?: number | null
           id?: string
           last_updated?: string | null
           platform_id?: string | null
           quantity?: number
+          source?: string
           user_id?: string
         }
         Relationships: [
@@ -145,6 +151,7 @@ export type Database = {
           asset_name: string
           asset_type: string
           created_at: string | null
+          currency: string
           fees: number | null
           id: string
           notes: string | null
@@ -161,6 +168,7 @@ export type Database = {
           asset_name: string
           asset_type: string
           created_at?: string | null
+          currency?: string
           fees?: number | null
           id?: string
           notes?: string | null
@@ -177,6 +185,7 @@ export type Database = {
           asset_name?: string
           asset_type?: string
           created_at?: string | null
+          currency?: string
           fees?: number | null
           id?: string
           notes?: string | null
