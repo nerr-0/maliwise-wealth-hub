@@ -13,15 +13,17 @@ import {
   Wallet, TrendingUp, PieChart as PieChartIcon, DollarSign,
   ArrowUpRight, ArrowDownRight, Plus, Settings, Bell,
   Building2, Landmark, Users, FileText, CreditCard,
-  LogOut, Radio
+  LogOut, Radio, Globe, RefreshCw
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { usePortfolioHoldings, useTransactions } from "@/hooks/usePortfolio";
 import { useRealtimePortfolio } from "@/hooks/useRealtimePortfolio";
 import { useMarketPrices } from "@/hooks/useMarketPrices";
+import { useOffshoreBrokerSync } from "@/hooks/useOffshoreBrokerSync";
 import TransactionForm from "@/components/TransactionForm";
 import AIInsights from "@/components/AIInsights";
 import AddPlatformDialog from "@/components/AddPlatformDialog";
+import ConnectBrokerDialog from "@/components/ConnectBrokerDialog";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -31,6 +33,7 @@ const EnhancedDashboard = () => {
   const { data: transactions = [], isLoading: transactionsLoading } = useTransactions();
   useRealtimePortfolio();
   const { prices: marketPrices, isLoading: pricesLoading, lastUpdated: pricesLastUpdated } = useMarketPrices(holdings);
+  const { syncBroker, syncing } = useOffshoreBrokerSync();
   const [firstName, setFirstName] = useState("Investor");
   
   const [selectedPeriod, setSelectedPeriod] = useState("1Y");
@@ -40,6 +43,11 @@ const EnhancedDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [dialogCategory, setDialogCategory] = useState<string | null>(null);
   const [additionalPlatforms, setAdditionalPlatforms] = useState<Record<string, Array<{ name: string; type: string }>>>({});
+  const [connectBroker, setConnectBroker] = useState<string | null>(null);
+  const [connectedPlatforms, setConnectedPlatforms] = useState<any[]>([]);
+
+  // TODO: Replace with live FX rate API
+  const USD_TO_KES = 129;
 
   useEffect(() => {
     const fetchProfile = async () => {
