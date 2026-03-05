@@ -69,6 +69,19 @@ const EnhancedDashboard = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Fetch connected platforms
+  useEffect(() => {
+    const fetchConnected = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from("connected_platforms")
+        .select("*")
+        .eq("user_id", user.id);
+      if (data) setConnectedPlatforms(data);
+    };
+    fetchConnected();
+  }, [user?.id]);
+
   useEffect(() => {
     const controlHeader = () => {
       if (window.scrollY > lastScrollY && window.scrollY > 100) {
