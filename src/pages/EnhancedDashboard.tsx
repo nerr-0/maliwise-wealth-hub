@@ -569,6 +569,96 @@ const EnhancedDashboard = () => {
                       </div>
                     );
                   })}
+
+                  {/* International / Offshore Brokers Section */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <Globe className="w-5 h-5 text-primary" />
+                      <h3 className="text-lg font-semibold">International / Offshore Brokers</h3>
+                      <Badge variant="secondary" className="text-xs">USD</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Connect international brokerage accounts. Holdings are converted to KES at 1 USD = {USD_TO_KES} KES.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {(() => {
+                        const offshoreBrokers = [
+                          { name: "Finch", type: "International Broker" },
+                          { name: "Alpaca", type: "International Broker" },
+                          { name: "Simul8or", type: "International Broker" },
+                          { name: "Interactive Brokers", type: "International Broker" },
+                        ];
+                        const extraOffshore = additionalPlatforms["International / Offshore Brokers"] || [];
+                        const allOffshore = [
+                          ...offshoreBrokers,
+                          ...extraOffshore,
+                        ];
+
+                        return (
+                          <>
+                            {allOffshore.map((broker) => {
+                              const connected = connectedPlatforms.find(
+                                (p) => p.platform_name === broker.name && p.platform_type === "International / Offshore Brokers"
+                              );
+                              const isConnected = connected?.connection_status === "connected";
+
+                              return (
+                                <Card key={broker.name} className={isConnected ? "border-primary/50" : ""}>
+                                  <CardContent className="p-4">
+                                    <div className="space-y-2">
+                                      <div className="flex items-center justify-between">
+                                        <h4 className="font-medium">{broker.name}</h4>
+                                        {isConnected && (
+                                          <Badge variant="outline" className="text-xs border-primary text-primary">
+                                            Connected
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-sm text-muted-foreground">{broker.type}</p>
+                                      {!isConnected ? (
+                                        <>
+                                          <p className="text-sm text-orange-600">Not Connected</p>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="w-full"
+                                            onClick={() => setConnectBroker(broker.name)}
+                                          >
+                                            Connect
+                                          </Button>
+                                        </>
+                                      ) : (
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="w-full"
+                                          disabled={syncing}
+                                          onClick={() => syncBroker(connected.id, broker.name)}
+                                        >
+                                          <RefreshCw className={`w-3 h-3 mr-1 ${syncing ? "animate-spin" : ""}`} />
+                                          {syncing ? "Syncing..." : "Sync Holdings"}
+                                        </Button>
+                                      )}
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              );
+                            })}
+                            <Card
+                              className="border-dashed border-2 border-muted-foreground/25 hover:border-primary/50 transition-colors cursor-pointer"
+                              onClick={() => setDialogCategory("International / Offshore Brokers")}
+                            >
+                              <CardContent className="p-4 flex flex-col items-center justify-center h-full min-h-[120px]">
+                                <Plus className="w-8 h-8 text-muted-foreground mb-2" />
+                                <p className="text-sm font-medium text-muted-foreground">Add Broker</p>
+                                <p className="text-xs text-muted-foreground/70">Connect another offshore broker</p>
+                              </CardContent>
+                            </Card>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
                 </div>
 
                 <AddPlatformDialog
@@ -579,7 +669,6 @@ const EnhancedDashboard = () => {
                     dialogCategory
                       ? [
                           ...(additionalPlatforms[dialogCategory] || []).map(p => p.name),
-                          // include base platform names too
                         ]
                       : []
                   }
@@ -588,6 +677,24 @@ const EnhancedDashboard = () => {
                       ...prev,
                       [dialogCategory!]: [...(prev[dialogCategory!] || []), platform],
                     }));
+                  }}
+                />
+
+                <ConnectBrokerDialog
+                  open={!!connectBroker}
+                  onOpenChange={(open) => { if (!open) setConnectBroker(null); }}
+                  platformName={connectBroker || ""}
+                  onConnected={() => {
+                    // Refresh connected platforms
+                    if (user?.id) {
+                      supabase
+                        .from("connected_platforms")
+                        .select("*")
+                        .eq("user_id", user.id)
+                        .then(({ data }) => {
+                          if (data) setConnectedPlatforms(data);
+                        });
+                    }
                   }}
                 />
               </CardContent>
