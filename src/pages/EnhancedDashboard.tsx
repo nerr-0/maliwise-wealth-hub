@@ -97,14 +97,19 @@ const EnhancedDashboard = () => {
   }, [lastScrollY]);
 
   // Calculate portfolio metrics using live prices when available
-  const totalPortfolioValue = holdings.reduce((sum, holding) => {
+  // Apply currency conversion for USD holdings
+  const totalPortfolioValue = holdings.reduce((sum, holding: any) => {
+    const currencyRate = holding.currency === 'USD' ? USD_TO_KES : 1;
     const livePrice = marketPrices[holding.asset_name];
     if (livePrice) {
-      return sum + livePrice.price * holding.quantity;
+      return sum + livePrice.price * holding.quantity * currencyRate;
     }
-    return sum + (holding.current_value || 0);
+    return sum + (holding.current_value || 0) * currencyRate;
   }, 0);
-  const totalInvested = holdings.reduce((sum, holding) => sum + (holding.average_cost || 0) * holding.quantity, 0);
+  const totalInvested = holdings.reduce((sum, holding: any) => {
+    const currencyRate = holding.currency === 'USD' ? USD_TO_KES : 1;
+    return sum + (holding.average_cost || 0) * holding.quantity * currencyRate;
+  }, 0);
   const totalGain = totalPortfolioValue - totalInvested;
   const totalGainPercent = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
 
