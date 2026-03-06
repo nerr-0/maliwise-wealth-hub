@@ -740,6 +740,24 @@ const EnhancedDashboard = () => {
                     }
                   }}
                 />
+
+                <ConnectPlatformDialog
+                  open={!!connectPlatform}
+                  onOpenChange={(open) => { if (!open) setConnectPlatform(null); }}
+                  platformName={connectPlatform?.name || ""}
+                  platformCategory={connectPlatform?.category || ""}
+                  onConnected={() => {
+                    if (user?.id) {
+                      supabase
+                        .from("connected_platforms")
+                        .select("*")
+                        .eq("user_id", user.id)
+                        .then(({ data }) => {
+                          if (data) setConnectedPlatforms(data);
+                        });
+                    }
+                  }}
+                />
               </CardContent>
             </Card>
           </TabsContent>
