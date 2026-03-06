@@ -24,6 +24,7 @@ import TransactionForm from "@/components/TransactionForm";
 import AIInsights from "@/components/AIInsights";
 import AddPlatformDialog from "@/components/AddPlatformDialog";
 import ConnectBrokerDialog from "@/components/ConnectBrokerDialog";
+import ConnectPlatformDialog from "@/components/ConnectPlatformDialog";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -44,6 +45,7 @@ const EnhancedDashboard = () => {
   const [dialogCategory, setDialogCategory] = useState<string | null>(null);
   const [additionalPlatforms, setAdditionalPlatforms] = useState<Record<string, Array<{ name: string; type: string }>>>({});
   const [connectBroker, setConnectBroker] = useState<string | null>(null);
+  const [connectPlatform, setConnectPlatform] = useState<{ name: string; category: string } | null>(null);
   const [connectedPlatforms, setConnectedPlatforms] = useState<any[]>([]);
 
   // TODO: Replace with live FX rate API
