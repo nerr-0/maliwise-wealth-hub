@@ -24,7 +24,9 @@ import TransactionForm from "@/components/TransactionForm";
 import AIInsights from "@/components/AIInsights";
 import AddPlatformDialog from "@/components/AddPlatformDialog";
 import ConnectBrokerDialog from "@/components/ConnectBrokerDialog";
+import ConnectPlatformDialog from "@/components/ConnectPlatformDialog";
 import { format, formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const EnhancedDashboard = () => {
@@ -44,6 +46,7 @@ const EnhancedDashboard = () => {
   const [dialogCategory, setDialogCategory] = useState<string | null>(null);
   const [additionalPlatforms, setAdditionalPlatforms] = useState<Record<string, Array<{ name: string; type: string }>>>({});
   const [connectBroker, setConnectBroker] = useState<string | null>(null);
+  const [connectPlatform, setConnectPlatform] = useState<{ name: string; category: string } | null>(null);
   const [connectedPlatforms, setConnectedPlatforms] = useState<any[]>([]);
 
   // TODO: Replace with live FX rate API
@@ -535,26 +538,66 @@ const EnhancedDashboard = () => {
                   ].map((group) => {
                     const extra = additionalPlatforms[group.category] || [];
                     const allPlatforms = [...group.platforms, ...extra.map(p => ({ ...p, status: "Not Connected" }))];
-                    const existingNames = allPlatforms.map(p => p.name);
 
                     return (
                       <div key={group.category}>
                         <h3 className="text-lg font-semibold mb-3">{group.category}</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {allPlatforms.map((platform) => (
-                            <Card key={platform.name}>
-                              <CardContent className="p-4">
-                                <div className="space-y-2">
-                                  <h4 className="font-medium">{platform.name}</h4>
-                                  <p className="text-sm text-muted-foreground">{platform.type}</p>
-                                  <p className="text-sm text-orange-600">{platform.status}</p>
-                                  <Button size="sm" variant="outline" className="w-full">
-                                    Connect
-                                  </Button>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
+                          {allPlatforms.map((platform) => {
+                            const connected = connectedPlatforms.find(
+                              (p) => p.platform_name === platform.name && p.platform_type === group.category
+                            );
+                            const isConnected = connected?.connection_status === "connected";
+
+                            return (
+                              <Card key={platform.name} className={isConnected ? "border-primary/50" : ""}>
+                                <CardContent className="p-4">
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <h4 className="font-medium">{platform.name}</h4>
+                                      {isConnected && (
+                                        <Badge variant="outline" className="text-xs border-primary text-primary">
+                                          Connected
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{platform.type}</p>
+                                    {!isConnected ? (
+                                      <>
+                                        <p className="text-sm text-orange-600">Not Connected</p>
+                                        <Button
+                                          size="sm"
+                                          variant="outline"
+                                          className="w-full"
+                                          onClick={() => setConnectPlatform({ name: platform.name, category: group.category })}
+                                        >
+                                          Connect
+                                        </Button>
+                                      </>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="w-full text-destructive hover:text-destructive"
+                                        onClick={async () => {
+                                          await supabase
+                                            .from("connected_platforms")
+                                            .delete()
+                                            .eq("id", connected.id);
+                                          setConnectedPlatforms((prev) =>
+                                            prev.filter((p) => p.id !== connected.id)
+                                          );
+                                          toast.success(`${platform.name} disconnected`);
+                                        }}
+                                      >
+                                        Disconnect
+                                      </Button>
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
                           <Card
                             className="border-dashed border-2 border-muted-foreground/25 hover:border-primary/50 transition-colors cursor-pointer"
                             onClick={() => setDialogCategory(group.category)}
@@ -686,6 +729,24 @@ const EnhancedDashboard = () => {
                   platformName={connectBroker || ""}
                   onConnected={() => {
                     // Refresh connected platforms
+                    if (user?.id) {
+                      supabase
+                        .from("connected_platforms")
+                        .select("*")
+                        .eq("user_id", user.id)
+                        .then(({ data }) => {
+                          if (data) setConnectedPlatforms(data);
+                        });
+                    }
+                  }}
+                />
+
+                <ConnectPlatformDialog
+                  open={!!connectPlatform}
+                  onOpenChange={(open) => { if (!open) setConnectPlatform(null); }}
+                  platformName={connectPlatform?.name || ""}
+                  platformCategory={connectPlatform?.category || ""}
+                  onConnected={() => {
                     if (user?.id) {
                       supabase
                         .from("connected_platforms")

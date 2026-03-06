@@ -85,26 +85,26 @@ const ConnectBrokerDialog = ({
         {isSupported ? (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="api-key">API Key</Label>
+              <Label htmlFor="api-key">Email or Username</Label>
               <Input
                 id="api-key"
-                placeholder="Enter API key"
+                placeholder="Enter your email or username"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="api-secret">API Secret</Label>
+              <Label htmlFor="api-secret">Password</Label>
               <Input
                 id="api-secret"
                 type="password"
-                placeholder="Enter API secret"
+                placeholder="Enter your password"
                 value={apiSecret}
                 onChange={(e) => setApiSecret(e.target.value)}
               />
             </div>
             <p className="text-xs text-muted-foreground">
-              Your credentials are stored securely and used only to fetch your portfolio data.
+              Your credentials are stored securely and used only to sync your portfolio data.
             </p>
           </div>
         ) : (
