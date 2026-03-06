@@ -26,6 +26,7 @@ import AddPlatformDialog from "@/components/AddPlatformDialog";
 import ConnectBrokerDialog from "@/components/ConnectBrokerDialog";
 import ConnectPlatformDialog from "@/components/ConnectPlatformDialog";
 import { format, formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const EnhancedDashboard = () => {
