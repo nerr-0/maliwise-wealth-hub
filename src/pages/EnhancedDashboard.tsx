@@ -539,10 +539,31 @@ const EnhancedDashboard = () => {
                     const extra = additionalPlatforms[group.category] || [];
                     const allPlatforms = [...group.platforms, ...extra.map(p => ({ ...p, status: "Not Connected" }))];
 
+                    const getInitials = (name: string) => {
+                      const words = name.split(/\s+/);
+                      return words.length >= 2
+                        ? (words[0][0] + words[1][0]).toUpperCase()
+                        : name.slice(0, 2).toUpperCase();
+                    };
+
+                    const avatarColors = [
+                      "bg-primary/15 text-primary",
+                      "bg-accent text-accent-foreground",
+                      "bg-secondary text-secondary-foreground",
+                      "bg-muted text-muted-foreground",
+                      "bg-success/15 text-success",
+                    ];
+
+                    const getAvatarColor = (name: string) => {
+                      let hash = 0;
+                      for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+                      return avatarColors[Math.abs(hash) % avatarColors.length];
+                    };
+
                     return (
                       <div key={group.category}>
-                        <h3 className="text-lg font-semibold mb-3">{group.category}</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <h3 className="text-lg font-semibold mb-4 pb-2 border-b border-border">{group.category}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                           {allPlatforms.map((platform) => {
                             const connected = connectedPlatforms.find(
                               (p) => p.platform_name === platform.name && p.platform_type === group.category
@@ -550,59 +571,62 @@ const EnhancedDashboard = () => {
                             const isConnected = connected?.connection_status === "connected";
 
                             return (
-                              <Card key={platform.name} className={isConnected ? "border-primary/50" : ""}>
-                                <CardContent className="p-4">
-                                  <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                      <h4 className="font-medium">{platform.name}</h4>
-                                      {isConnected && (
-                                        <Badge variant="outline" className="text-xs border-primary text-primary">
-                                          Connected
-                                        </Badge>
-                                      )}
+                              <Card
+                                key={platform.name}
+                                className={`min-h-[160px] transition-all ${isConnected ? "border-l-4 border-l-primary" : ""}`}
+                              >
+                                <CardContent className="p-6">
+                                  <div className="flex items-start justify-between mb-5">
+                                    <div className="flex gap-4 items-start">
+                                      <div className={`h-12 w-12 rounded-lg flex items-center justify-center text-sm font-bold shrink-0 ${getAvatarColor(platform.name)}`}>
+                                        {getInitials(platform.name)}
+                                      </div>
+                                      <div>
+                                        <h4 className="text-base font-semibold leading-tight">{platform.name}</h4>
+                                        <p className="text-xs text-muted-foreground uppercase tracking-wide mt-1">{platform.type}</p>
+                                      </div>
                                     </div>
-                                    <p className="text-sm text-muted-foreground">{platform.type}</p>
-                                    {!isConnected ? (
-                                      <>
-                                        <p className="text-sm text-orange-600">Not Connected</p>
-                                        <Button
-                                          size="sm"
-                                          variant="outline"
-                                          className="w-full"
-                                          onClick={() => setConnectPlatform({ name: platform.name, category: group.category })}
-                                        >
-                                          Connect
-                                        </Button>
-                                      </>
-                                    ) : (
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        className="w-full text-destructive hover:text-destructive"
-                                        onClick={async () => {
-                                          await supabase
-                                            .from("connected_platforms")
-                                            .delete()
-                                            .eq("id", connected.id);
-                                          setConnectedPlatforms((prev) =>
-                                            prev.filter((p) => p.id !== connected.id)
-                                          );
-                                          toast.success(`${platform.name} disconnected`);
-                                        }}
-                                      >
-                                        Disconnect
-                                      </Button>
-                                    )}
+                                    <div className="flex items-center gap-1.5 shrink-0 mt-1">
+                                      <div className={`h-2 w-2 rounded-full ${isConnected ? "bg-green-500" : "bg-orange-400"}`} />
+                                      <span className="text-xs text-muted-foreground">{isConnected ? "Connected" : "Not Connected"}</span>
+                                    </div>
                                   </div>
+                                  {!isConnected ? (
+                                    <Button
+                                      size="sm"
+                                      className="w-full"
+                                      onClick={() => setConnectPlatform({ name: platform.name, category: group.category })}
+                                    >
+                                      Connect
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="w-full text-destructive hover:text-destructive"
+                                      onClick={async () => {
+                                        await supabase
+                                          .from("connected_platforms")
+                                          .delete()
+                                          .eq("id", connected.id);
+                                        setConnectedPlatforms((prev) =>
+                                          prev.filter((p) => p.id !== connected.id)
+                                        );
+                                        toast.success(`${platform.name} disconnected`);
+                                      }}
+                                    >
+                                      Disconnect
+                                    </Button>
+                                  )}
                                 </CardContent>
                               </Card>
                             );
                           })}
                           <Card
-                            className="border-dashed border-2 border-muted-foreground/25 hover:border-primary/50 transition-colors cursor-pointer"
+                            className="border-dashed border-2 border-muted-foreground/25 hover:border-primary/50 transition-colors cursor-pointer min-h-[160px]"
                             onClick={() => setDialogCategory(group.category)}
                           >
-                            <CardContent className="p-4 flex flex-col items-center justify-center h-full min-h-[120px]">
+                            <CardContent className="p-6 flex flex-col items-center justify-center h-full">
                               <Plus className="w-8 h-8 text-muted-foreground mb-2" />
                               <p className="text-sm font-medium text-muted-foreground">Add {group.category}</p>
                               <p className="text-xs text-muted-foreground/70">Connect your preferred platform</p>
