@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client2';
 import { User, Session } from '@supabase/supabase-js';
 import { TrendingUp, Shield, PieChart, Wallet, ArrowRight } from 'lucide-react';
 import { z } from 'zod';
