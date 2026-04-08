@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client2";
+import { supabase } from "@/integrations/supabase/clients2";
 import { PortfolioHolding } from "./usePortfolio";
 
 export interface MarketPrices {

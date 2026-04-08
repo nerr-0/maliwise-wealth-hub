@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Brain, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client2';
+import { supabase } from '@/integrations/supabase/clients2';
 import { usePortfolioHoldings, useTransactions } from '@/hooks/usePortfolio';
 import { useToast } from '@/hooks/use-toast';
 
