@@ -11,7 +11,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey)
 async function testLogin() {
   const { data, error } = await supabase.auth.signInWithPassword({
     email: "1_ingarasell@gmail.com",   // replace with one of your dummy users
-    password: "TrialAccount#123"          // replace with that user’s password
+    password: "TrialAccounts#123"          // replace with that user’s password
   })
 
   if (error) {
