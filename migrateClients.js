@@ -6,18 +6,36 @@ const SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhY
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
 
-async function createTestUser() {
-  const { data, error } = await supabase.auth.admin.createUser({
-    email: "viclesner@yahoo.com",   // must be a valid email
-    password: "TrialAccount#123",         // at least 6 characters
-    email_confirm: false
-  })
+
+
+async function migrateClients() {
+  // Fetch clients with the new fixed_email column
+  const { data: clients, error } = await supabase
+    .from('clients')
+    .select('client_id, fixed_email, password')
 
   if (error) {
-    console.error("Error creating user:", error)
-  } else {
-    console.log("Created user:", data.user.email)
+    console.error("Error fetching clients:", error)
+    return
+  }
+
+  for (const client of clients) {
+    // Skip rows without valid fixed_email or password
+    if (!client.fixed_email || !client.password) continue
+    if (client.password.length < 6) continue
+
+    const { data, error } = await supabase.auth.admin.createUser({
+      email: client.fixed_email,   // use fixed_email instead of email
+      password: client.password,   // must be plain text
+      email_confirm: true
+    })
+
+    if (error) {
+      console.error("Error creating user:", client.fixed_email, error.message)
+    } else {
+      console.log("Created user:", data.user.email)
+    }
   }
 }
 
-createTestUser()
+migrateClients()
